@@ -44,7 +44,7 @@ void TreeModel::ConstructTree()
 
     node_root = new Node(-1, "root", "");
 
-    QMap<int, Node*> node_map;
+    QHash<int, Node*> hash;
 
     int id = 0;
     QString name;
@@ -54,7 +54,7 @@ void TreeModel::ConstructTree()
         id = query.value(0).toInt();
         name = query.value(1).toString();
         description = query.value(2).toString();
-        node_map[id] = new Node(id, name, description);
+        hash[id] = new Node(id, name, description);
     }
 
     if (query.lastError().isValid()) {
@@ -82,7 +82,7 @@ void TreeModel::ConstructTree()
     while (query.next()) {
         ancestor = node_root;
         descendant_id = query.value(0).toInt();
-        descendant = node_map.value(descendant_id);
+        descendant = hash.value(descendant_id);
 
         if (ancestor->left_child == nullptr) {
             ancestor->left_child = descendant;
@@ -111,8 +111,8 @@ void TreeModel::ConstructTree()
         ancestor_id = query.value(0).toInt();
         descendant_id = query.value(1).toInt();
 
-        ancestor = node_map.value(ancestor_id);
-        descendant = node_map.value(descendant_id);
+        ancestor = hash.value(ancestor_id);
+        descendant = hash.value(descendant_id);
 
         if (ancestor->left_child == nullptr) {
             ancestor->left_child = descendant;
