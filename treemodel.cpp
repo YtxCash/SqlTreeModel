@@ -233,8 +233,8 @@ int TreeModel::rowCount(const QModelIndex& parent) const
     auto* node_parent = GetNode(parent);
     auto* node_tmp = node_parent->left_child;
 
-    if (node_tmp == nullptr)
-        return i;
+    //    if (node_tmp == nullptr)
+    //        return i;
 
     while (node_tmp != nullptr) {
         node_tmp = node_tmp->right_sibling;
@@ -367,6 +367,9 @@ bool TreeModel::insertRows(int row, int count, const QModelIndex& parent)
 {
     if (row < 0 || count != 1)
         return false;
+
+    //    QSqlQuery query = QSqlQuery(db);
+    //    int id = query.lastInsertId().toInt();
 
     beginInsertRows(parent, row, row);
 
@@ -601,7 +604,7 @@ bool TreeModel::dropMimeData(const QMimeData* data, Qt::DropAction action, int r
     if (!data->hasFormat("application/vnd.text.list"))
         return false;
 
-    if (column > 0)
+    if (column != 0)
         return false;
 
     QByteArray encodedData = data->data("application/vnd.text.list");

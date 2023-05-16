@@ -20,7 +20,7 @@ MainWindow::MainWindow(QWidget* parent)
     ui->treeView->setDropIndicatorShown(true);
     ui->treeView->setSortingEnabled(true);
 
-    ui->treeView->setColumnHidden(1, true);
+    //    ui->treeView->setColumnHidden(1, true);
     // 如果有需要，设置列宽
     ui->treeView->setColumnWidth(0, 400);
     ui->treeView->setColumnWidth(1, 300);
