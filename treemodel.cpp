@@ -549,10 +549,10 @@ Qt::ItemFlags TreeModel::flags(const QModelIndex& index) const
         return default_flags;
 }
 
-Qt::DropActions TreeModel::supportedDropActions() const
-{
-    return Qt::CopyAction | Qt::MoveAction;
-}
+// Qt::DropActions TreeModel::supportedDropActions() const
+//{
+//     return Qt::CopyAction | Qt::MoveAction;
+// }
 
 QStringList TreeModel::mimeTypes() const
 {

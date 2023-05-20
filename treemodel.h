@@ -59,7 +59,7 @@ public:
     bool removeRows(int row, int count,
         const QModelIndex& parent = QModelIndex()) override;
 
-    Qt::DropActions supportedDropActions() const override;
+    //    Qt::DropActions supportedDropActions() const override;
     Qt::ItemFlags flags(const QModelIndex& index) const override;
 
     QStringList mimeTypes() const override;
