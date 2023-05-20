@@ -43,7 +43,9 @@ target_wrapper.*
 *.qmlproject.user.*
 
 # QtCreator CMake
-CMakeLists.txt.user*
+CMakeLists.*
+main.*
+mainwindow.*
 
 # QtCreator 4.8< compilation database
 compile_commands.json
