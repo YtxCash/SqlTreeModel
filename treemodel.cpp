@@ -5,7 +5,7 @@
 
 TreeModel::TreeModel(const TableInfo& table, QObject* parent)
     : QAbstractItemModel(parent)
-    , node_root(nullptr)
+    , root(nullptr)
     , table_info(table)
 {
     db = QSqlDatabase::addDatabase("QSQLITE", "connection1");
@@ -26,7 +26,7 @@ TreeModel::TreeModel(const TableInfo& table, QObject* parent)
 
 TreeModel::~TreeModel()
 {
-    delete node_root;
+    delete root;
     db.close();
 }
 
@@ -42,7 +42,7 @@ void TreeModel::ConstructTree()
                    << query.lastError().text();
     }
 
-    node_root = new Node(-1, "root", "");
+    root = new Node(-1, "root", "");
 
     QHash<int, Node*> hash;
 
@@ -74,25 +74,23 @@ void TreeModel::ConstructTree()
                    << query.lastError().text();
     }
 
-    QList<int> id_list;
-
     int descendant_id = 0;
     int ancestor_id = 0;
     Node* ancestor;
     Node* descendant;
 
     while (query.next()) {
-        ancestor = node_root;
+        ancestor = root;
         descendant_id = query.value(0).toInt();
         descendant = hash.value(descendant_id);
 
-        if (ancestor->lchild == nullptr) {
+        if (!ancestor->HasLChild()) {
             ancestor->lchild = descendant;
             descendant->previous = ancestor;
         } else {
-            ancestor = node_root->lchild;
+            ancestor = root->lchild;
 
-            while (ancestor->rsibling != nullptr) {
+            while (ancestor->HasRSibling()) {
                 ancestor = ancestor->rsibling;
             }
 
@@ -115,13 +113,13 @@ void TreeModel::ConstructTree()
         ancestor = hash.value(ancestor_id);
         descendant = hash.value(descendant_id);
 
-        if (ancestor->lchild == nullptr) {
+        if (!ancestor->HasLChild()) {
             ancestor->lchild = descendant;
             descendant->previous = ancestor;
         } else {
             ancestor = ancestor->lchild;
 
-            while (ancestor->rsibling != nullptr) {
+            while (ancestor->HasRSibling()) {
                 ancestor = ancestor->rsibling;
             }
 
@@ -147,20 +145,20 @@ Node* TreeModel::GetNode(const QModelIndex& index) const
             return node;
     }
 
-    return node_root;
+    return root;
 }
 
-Node* TreeModel::FindChild(Node* parent, int row) const
+Node* TreeModel::GetNode(Node* parent, int row) const
 {
-    auto* node_tmp = parent->lchild;
+    auto* node = parent->lchild;
     int i = 0;
 
     while (i != row) {
-        node_tmp = node_tmp->rsibling;
+        node = node->rsibling;
         ++i;
     }
 
-    return node_tmp;
+    return node;
 }
 
 QModelIndex TreeModel::index(int row, int column, const QModelIndex& parent) const
@@ -169,18 +167,12 @@ QModelIndex TreeModel::index(int row, int column, const QModelIndex& parent) con
         return QModelIndex();
 
     auto* node_parent = GetNode(parent);
-    auto* node_tmp = node_parent->lchild;
-    int i = 0;
+    auto* node = GetNode(node_parent, row);
 
-    if (node_tmp == nullptr)
+    if (node == nullptr)
         return QModelIndex();
 
-    while (i != row) {
-        ++i;
-        node_tmp = node_tmp->rsibling;
-    }
-
-    return createIndex(row, column, node_tmp);
+    return createIndex(row, column, node);
 }
 
 QModelIndex TreeModel::parent(const QModelIndex& index) const
@@ -194,18 +186,18 @@ QModelIndex TreeModel::parent(const QModelIndex& index) const
         node = node->previous;
     }
 
-    auto* parent = node->previous;
-    if (parent == node_root)
+    auto* node_parent = node->previous;
+    if (node_parent == root)
         return QModelIndex();
 
-    auto* parent_tmp = parent;
+    node = node_parent;
     int i = 0;
-    while (!parent_tmp->IsLChild()) {
+    while (!node->IsLChild()) {
         ++i;
-        parent_tmp = parent_tmp->previous;
+        node = node->previous;
     }
 
-    return createIndex(i, 0, parent);
+    return createIndex(i, 0, node_parent);
 }
 
 int TreeModel::rowCount(const QModelIndex& parent) const
@@ -262,11 +254,10 @@ bool TreeModel::setData(const QModelIndex& index, const QVariant& value, int rol
         break;
     case 2:
         node->description = value.toString();
-        if (UpdateRecord(node->id, "description", value.toString())) {
-            emit dataChanged(index, index, QVector<int>() << role);
-            return true;
-        }
-        break;
+        emit dataChanged(index, index, QVector<int>() << role);
+
+        UpdateRecord(node->id, "description", value.toString());
+        return true;
     default:
         break;
     }
@@ -280,13 +271,13 @@ int TreeModel::columnCount(const QModelIndex& parent) const
     return 3;
 }
 
-bool TreeModel::UpdateRecord(const int id, const QString& column, const QString& name)
+bool TreeModel::UpdateRecord(int id, QString column, QString string)
 {
 
     QSqlQuery query = QSqlQuery(db);
-    query.prepare(QString("UPDATE %1 SET %2 = :name WHERE id = :id").arg(table_info.node, column));
+    query.prepare(QString("UPDATE %1 SET %2 = :string WHERE id = :id").arg(table_info.node, column));
     query.bindValue(":id", id);
-    query.bindValue(":name", name);
+    query.bindValue(":string", string);
 
     if (!query.exec()) {
         qWarning() << "Failed to edit record:" << query.lastError().text();
@@ -310,23 +301,21 @@ bool TreeModel::insertRows(int row, int count, const QModelIndex& parent)
     beginInsertRows(parent, row, row);
 
     auto* node_parent = GetNode(parent);
-    auto* node_tmp = FindChild(node_parent, row);
-
+    auto* node = GetNode(node_parent, row);
     auto* node_new = new Node(0, "New Node", "");
-    node_new->previous = node_parent;
 
-    if (node_tmp->IsLChild()) {
+    if (node->IsLChild()) {
         node_parent->lchild = node_new;
         node_new->previous = node_parent;
 
-        node_tmp->previous = node_new;
-        node_new->rsibling = node_tmp;
+        node->previous = node_new;
+        node_new->rsibling = node;
     } else {
-        node_tmp->previous->rsibling = node_new;
-        node_new->previous = node_tmp->previous;
+        node->previous->rsibling = node_new;
+        node_new->previous = node->previous;
 
-        node_new->rsibling = node_tmp;
-        node_tmp->previous = node_new;
+        node_new->rsibling = node;
+        node->previous = node_new;
     }
 
     endInsertRows();
@@ -335,7 +324,7 @@ bool TreeModel::insertRows(int row, int count, const QModelIndex& parent)
     return true;
 }
 
-bool TreeModel::InsertRecord(const int id_parent, const QString& name)
+bool TreeModel::InsertRecord(int id_parent, QString name)
 {
 
     QSqlQuery query = QSqlQuery(db);
@@ -373,46 +362,42 @@ bool TreeModel::removeRows(int row, int count, const QModelIndex& parent)
         return false;
 
     auto* node_parent = GetNode(parent);
-    auto* node_tmp = FindChild(node_parent, row);
-    int id = node_tmp->id;
+    auto* node = GetNode(node_parent, row);
+    int id = node->id;
 
     beginRemoveRows(parent, row, row);
 
-    if (node_tmp->lchild != nullptr) {
-        auto* node_tmp2 = node_tmp->rsibling;
+    if (node->HasLChild()) {
+        auto* tmp = node;
 
-        if (node_tmp2 == nullptr) {
-            node_tmp2 = node_tmp;
-        } else {
-            while (node_tmp2->rsibling != nullptr) {
-                node_tmp2 = node_tmp2->rsibling;
-            }
+        while (tmp->HasRSibling()) {
+            tmp = tmp->rsibling;
         }
 
-        node_tmp2->rsibling = node_tmp->lchild;
-        node_tmp->lchild->previous = node_tmp2;
+        tmp->rsibling = node->lchild;
+        node->lchild->previous = tmp;
 
-        node_tmp->lchild = nullptr;
+        node->lchild = nullptr;
     }
 
-    if (!node_tmp->IsLChild()) {
-        if (node_tmp->rsibling == nullptr) {
-            node_tmp->previous->rsibling = nullptr;
+    if (!node->IsLChild()) {
+        if (!node->HasRSibling()) {
+            node->previous->rsibling = nullptr;
         } else {
-            node_tmp->previous->rsibling = node_tmp->rsibling;
-            node_tmp->rsibling->previous = node_tmp->previous;
+            node->previous->rsibling = node->rsibling;
+            node->rsibling->previous = node->previous;
         }
     } else {
-        if (node_tmp->rsibling == nullptr) {
-            node_tmp->previous->lchild = nullptr;
+        if (!node->HasRSibling()) {
+            node->previous->lchild = nullptr;
         } else {
-            node_tmp->previous->lchild = node_tmp->rsibling;
-            node_tmp->rsibling->previous = node_tmp->previous;
+            node->previous->lchild = node->rsibling;
+            node->rsibling->previous = node->previous;
         }
     }
 
-    delete node_tmp;
-    node_tmp = nullptr;
+    delete node;
+    node = nullptr;
 
     endRemoveRows();
 
@@ -421,7 +406,7 @@ bool TreeModel::removeRows(int row, int count, const QModelIndex& parent)
     return true;
 }
 
-bool TreeModel::DeleteRecord(const int id)
+bool TreeModel::DeleteRecord(int id)
 {
     QSqlQuery query = QSqlQuery(db);
 

@@ -4,7 +4,7 @@
 
 struct Node {
 
-    Node(const int& id, const QString& name, const QString& description)
+    Node(int id, QString name, QString description)
         : id(id)
         , name(name)
         , description(description)
@@ -16,6 +16,16 @@ struct Node {
         return previous != nullptr && previous->lchild == this;
     }
 
+    bool HasRSibling()
+    {
+        return rsibling != nullptr;
+    }
+
+    bool HasLChild()
+    {
+        return lchild != nullptr;
+    }
+
     int id { 0 };
     QString name { "" };
     QString description { "" };
@@ -25,11 +35,6 @@ struct Node {
     Node* rsibling { nullptr };
 
 #if 0 // 暂时用不上
-    bool HasLChild()
-    {
-        return lchild != nullptr;
-    }
-
     Node* GetLChild()
     {
         return lchild;
@@ -40,17 +45,12 @@ struct Node {
         return previous != nullptr;
     };
 
-    bool HasSibling()
-    {
-        return rsibling != nullptr;
-    }
-
     bool IsLeaf()
     {
         return lchild == nullptr && rsibling == nullptr;
     }
 
-    bool IsSibling()
+    bool IsRSibling()
     {
         return previous != nullptr && previous->rsibling == this;
     }
@@ -62,7 +62,7 @@ struct TableInfo {
     QString node { "" };
     QString node_path { "" };
 
-    TableInfo(const QString& database, const QString& node, const QString& node_path)
+    TableInfo(QString database, QString node, QString node_path)
         : database(database)
         , node(node)
         , node_path(node_path)
@@ -106,18 +106,18 @@ public:
 #endif
 
 private:
-    bool InsertRecord(const int id_parent, const QString& name);
-    bool UpdateRecord(const int id, const QString& column, const QString& name);
-    bool DeleteRecord(const int id);
+    bool InsertRecord(int id_parent, QString name);
+    bool UpdateRecord(int id, QString column, QString string);
+    bool DeleteRecord(int id);
     bool SortRecord();
 
     void ConstructTree();
 
     Node* GetNode(const QModelIndex& index) const;
-    Node* FindChild(Node* parent, int row) const;
+    Node* GetNode(Node* parent, int row) const;
 
 private:
-    Node* node_root;
+    Node* root;
 
     QSqlDatabase db;
     TableInfo table_info;
