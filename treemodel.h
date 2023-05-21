@@ -59,32 +59,27 @@ public:
     bool removeRows(int row, int count,
         const QModelIndex& parent = QModelIndex()) override;
 
-    //    Qt::DropActions supportedDropActions() const override;
     Qt::ItemFlags flags(const QModelIndex& index) const override;
 
+    // 暂时不考虑拖动
+#if 0
     QStringList mimeTypes() const override;
     QMimeData* mimeData(const QModelIndexList& indexes) const override;
     bool dropMimeData(const QMimeData* data, Qt::DropAction action, int row,
         int column, const QModelIndex& parent) override;
+    bool IsDescendantOf(Node* possibleDescendant, Node* possibleAncestor);
+#endif
 
 private:
     bool InsertRecord(const int id_parent, const QString& name);
     bool UpdateRecord(const int id, const QString& column, const QString& name);
     bool DeleteRecord(const int id);
     bool SortRecord();
-    bool DragRecord();
 
     void ConstructTree();
 
-    Node* FindNode(Node* node, const QString& name) const;
-
-    //    QModelIndexList Find(const QString& name, int column,
-    //        const QModelIndex& start, int flags);
-
     Node* GetNode(const QModelIndex& index) const;
     Node* FindChild(Node* parent, int row) const;
-
-    //    bool IsDescendantOf(Node* possibleDescendant, Node* possibleAncestor);
 
 private:
     Node* node_root;

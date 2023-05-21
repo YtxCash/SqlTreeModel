@@ -163,25 +163,6 @@ Node* TreeModel::FindChild(Node* parent, int row) const
     return node_tmp;
 }
 
-Node* TreeModel::FindNode(Node* node, const QString& name) const
-{
-    if (node == nullptr)
-        return nullptr;
-    else if (name == node->name)
-        return node;
-
-    FindNode(node->left_child, name);
-    FindNode(node->right_sibling, name);
-
-    return nullptr;
-}
-
-// QModelIndexList TreeModel::Find(const QString& text, int column,
-//     const QModelIndex& start, int flags)
-//{
-//     return match(start, column, text, -1, static_cast<Qt::MatchFlags>(flags));
-// }
-
 QModelIndex TreeModel::index(int row, int column, const QModelIndex& parent) const
 {
     if (!hasIndex(row, column, parent))
@@ -319,57 +300,15 @@ bool TreeModel::UpdateRecord(const int id, const QString& column, const QString&
 
 void TreeModel::sort(int column, Qt::SortOrder order)
 {
-//    emit layoutAboutToBeChanged();
-#if 0
-    QModelIndexList model_indexes = persistentIndexList();
-    QList<QPersistentModelIndex> persistent_indexes;
-    for (const auto& model_index : model_indexes) {
-        // The persistent indexes are stored in a separate list so that we can
-        // change the persistent indexes in the model without changing the
-        // model indexes.
-        persistent_indexes.append(QPersistentModelIndex(model_index));
-    }
+    emit layoutAboutToBeChanged();
 
-    // The persistent indexes are sorted according to the order of the model
-    // indexes. This is necessary because the model indexes are sorted
-    // according to the order of the persistent indexes.
-    QList<QModelIndex> source_indexes;
-    for (const auto& persistent_index : persistent_indexes) {
-        source_indexes.append(persistent_index);
-    }
-
-    // The nodes are sorted according to the column and order. The nodes are
-    // sorted in-place.
-    std::function<bool(Node*, Node*)> compare =
-        [this, column, order](Node* lhs, Node* rhs) -> bool {
-        bool result = (column == 0) ? (lhs->name < rhs->name)
-                                    : (lhs->id < rhs->id);
-        return order == Qt::AscendingOrder ? result : !result;
-    };
-    std::function<void(Node*)> sort_children = [&compare,
-                                                   &sort_children](Node* node) {
-        std::sort(node->children.begin(), node->children.end(), compare);
-        for (Node* child : node->children) {
-            sort_children(child);
-        }
-    };
-    sort_children(node_root);
-
-    // The model indexes are changed to match the sorted persistent indexes.
-    for (int i = 0; i < source_indexes.size(); ++i) {
-        changePersistentIndex(source_indexes.at(i), persistent_indexes.at(i));
-    }
-#endif
-    //    emit layoutChanged();
+    emit layoutChanged();
 }
 
 bool TreeModel::insertRows(int row, int count, const QModelIndex& parent)
 {
     if (row < 0 || count != 1)
         return false;
-
-    //    QSqlQuery query = QSqlQuery(db);
-    //    int id = query.lastInsertId().toInt();
 
     beginInsertRows(parent, row, row);
 
@@ -531,11 +470,6 @@ bool TreeModel::SortRecord()
     return true;
 }
 
-bool TreeModel::DragRecord()
-{
-    return true;
-}
-
 Qt::ItemFlags TreeModel::flags(const QModelIndex& index) const
 {
     auto default_flags = QAbstractItemModel::flags(index);
@@ -549,11 +483,7 @@ Qt::ItemFlags TreeModel::flags(const QModelIndex& index) const
         return default_flags;
 }
 
-// Qt::DropActions TreeModel::supportedDropActions() const
-//{
-//     return Qt::CopyAction | Qt::MoveAction;
-// }
-
+#if 0
 QStringList TreeModel::mimeTypes() const
 {
     QStringList types;
@@ -579,21 +509,21 @@ QMimeData* TreeModel::mimeData(const QModelIndexList& indexes) const
     return mimeData;
 }
 
-// bool TreeModel::IsDescendantOf(Node* possibleDescendant, Node* possibleAncestor)
-//{
-//     if (!possibleDescendant || !possibleAncestor) {
-//         return false;
-//     }
+bool TreeModel::IsDescendantOf(Node* possibleDescendant, Node* possibleAncestor)
+{
+    if (!possibleDescendant || !possibleAncestor) {
+        return false;
+    }
 
-//    Node* currentNode = possibleDescendant->previous;
-//    while (currentNode) {
-//        if (currentNode == possibleAncestor) {
-//            return true;
-//        }
-//        currentNode = currentNode->previous;
-//    }
-//    return false;
-//}
+    Node* currentNode = possibleDescendant->previous;
+    while (currentNode) {
+        if (currentNode == possibleAncestor) {
+            return true;
+        }
+        currentNode = currentNode->previous;
+    }
+    return false;
+}
 
 bool TreeModel::dropMimeData(const QMimeData* data, Qt::DropAction action, int row,
     int column, const QModelIndex& parent)
@@ -616,7 +546,7 @@ bool TreeModel::dropMimeData(const QMimeData* data, Qt::DropAction action, int r
         stream >> newItem;
         newItems << newItem;
     }
-#if 0
+
     Node* node_parent = GetNode(parent);
     int beginRow = row == -1 ? node_parent->children.count() : row;
 
@@ -641,7 +571,7 @@ bool TreeModel::dropMimeData(const QMimeData* data, Qt::DropAction action, int r
             endInsertRows();
         }
     }
-#endif
 
     return true;
 }
+#endif
