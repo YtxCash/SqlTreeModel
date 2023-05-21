@@ -2,52 +2,59 @@
 #include <QMimeData>
 #include <QSqlQuery>
 
-class Node {
+struct Node {
 
-public:
-    Node(const int& id, const QString& name, const QString& description);
+    Node(const int& id, const QString& name, const QString& description)
+        : id(id)
+        , name(name)
+        , description(description)
+    {
+    }
 
-public:
+    bool IsLChild()
+    {
+        return previous != nullptr && previous->lchild == this;
+    }
+
+    int id { 0 };
+    QString name { "" };
+    QString description { "" };
+
+    Node* previous { nullptr };
+    Node* lchild { nullptr };
+    Node* rsibling { nullptr };
+
+#if 0 // 暂时用不上
+    bool HasLChild()
+    {
+        return lchild != nullptr;
+    }
+
+    Node* GetLChild()
+    {
+        return lchild;
+    }
+
     bool HasPrevious()
     {
         return previous != nullptr;
     };
 
-    bool HasChild()
-    {
-        return child != nullptr;
-    }
-
     bool HasSibling()
     {
-        return sibling != nullptr;
+        return rsibling != nullptr;
     }
 
     bool IsLeaf()
     {
-        return child == nullptr && sibling == nullptr;
-    }
-
-    bool IsChild()
-    {
-        return previous != nullptr && previous->child == this;
+        return lchild == nullptr && rsibling == nullptr;
     }
 
     bool IsSibling()
     {
-        return previous != nullptr && previous->sibling == this;
+        return previous != nullptr && previous->rsibling == this;
     }
-
-public:
-    QChar mark { '\0' };
-    int id { 0 };
-    QString name { "" };
-    QString description { "" };
-
-public:
-    Node* previous { nullptr };
-    Node* child { nullptr };
-    Node* sibling { nullptr };
+#endif
 };
 
 struct TableInfo {
@@ -90,8 +97,7 @@ public:
 
     Qt::ItemFlags flags(const QModelIndex& index) const override;
 
-    // 暂时不考虑拖动
-#if 0
+#if 0 // 暂时不考虑拖动
     QStringList mimeTypes() const override;
     QMimeData* mimeData(const QModelIndexList& indexes) const override;
     bool dropMimeData(const QMimeData* data, Qt::DropAction action, int row,
