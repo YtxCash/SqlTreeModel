@@ -4,16 +4,13 @@
 
 struct Node {
     int id { 0 };
-    QChar mark { '\0' };
     QString name { "" };
     QString description { "" };
 
-    Node* previous { nullptr };
-    Node* left_child { nullptr };
-    Node* right_sibling { nullptr };
+    Node* parent { nullptr };
+    QList<Node*> children;
 
-    Node(const int& id, const QString& name, const QString& description,
-        Node* parent = nullptr, Node* left_child = nullptr, Node* right_sibling = nullptr)
+    Node(const int& id, const QString& name, const QString& description)
         : id(id)
         , name(name)
         , description(description)
@@ -79,7 +76,6 @@ private:
     void ConstructTree();
 
     Node* GetNode(const QModelIndex& index) const;
-    Node* FindChild(Node* parent, int row) const;
 
 private:
     Node* node_root;

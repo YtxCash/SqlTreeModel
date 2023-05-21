@@ -8,7 +8,7 @@ TreeModel::TreeModel(const TableInfo& table, QObject* parent)
     , node_root(nullptr)
     , table_info(table)
 {
-    db = QSqlDatabase::addDatabase("QSQLITE", "connection1");
+    db = QSqlDatabase::addDatabase("QSQLITE");
     db.setDatabaseName(table_info.database);
 
     if (!db.open()) {
@@ -65,12 +65,9 @@ void TreeModel::ConstructTree()
         qDebug() << "Construct TABLE NODE successfully";
     }
 
-    query.prepare(QString("SELECT descendant FROM %1 "
-                          "GROUP BY descendant HAVING COUNT(descendant) = 1")
-                      .arg(table_info.node_path));
-
+    query.prepare(QString("SELECT ancestor, descendant FROM %1 WHERE distance = 1").arg(table_info.node_path));
     if (!query.exec()) {
-        qWarning() << "Error query data from node_path 1st step"
+        qWarning() << "Error query data from node path"
                    << query.lastError().text();
     }
 
@@ -80,53 +77,15 @@ void TreeModel::ConstructTree()
     Node* descendant;
 
     while (query.next()) {
-        ancestor = node_root;
-        descendant_id = query.value(0).toInt();
-        descendant = hash.value(descendant_id);
-
-        if (ancestor->left_child == nullptr) {
-            ancestor->left_child = descendant;
-            descendant->previous = ancestor;
-            descendant->mark = 'z';
-        } else {
-            ancestor = node_root->left_child;
-
-            while (ancestor->right_sibling != nullptr) {
-                ancestor = ancestor->right_sibling;
-            }
-
-            ancestor->right_sibling = descendant;
-            descendant->previous = ancestor;
-        }
-    }
-
-    query.prepare(QString("SELECT ancestor, descendant FROM %1 WHERE distance = 1").arg(table_info.node_path));
-
-    if (!query.exec()) {
-        qWarning() << "Error query data from node_path 2nd"
-                   << query.lastError().text();
-    }
-
-    while (query.next()) {
         ancestor_id = query.value(0).toInt();
         descendant_id = query.value(1).toInt();
 
         ancestor = hash.value(ancestor_id);
         descendant = hash.value(descendant_id);
 
-        if (ancestor->left_child == nullptr) {
-            ancestor->left_child = descendant;
-            descendant->previous = ancestor;
-            descendant->mark = 'z';
-        } else {
-            ancestor = ancestor->left_child;
-
-            while (ancestor->right_sibling != nullptr) {
-                ancestor = ancestor->right_sibling;
-            }
-
-            ancestor->right_sibling = descendant;
-            descendant->previous = ancestor;
+        if (ancestor && descendant) {
+            ancestor->children.append(descendant);
+            descendant->parent = ancestor;
         }
     }
 
@@ -136,6 +95,13 @@ void TreeModel::ConstructTree()
         qWarning() << "TABLE NODE_PATHis not active";
     } else {
         qDebug() << "Construct TABLE NODE_PATH successfully";
+    }
+
+    for (auto* node : qAsConst(hash)) {
+        if (!node->parent) {
+            node->parent = node_root;
+            node_root->children.append(node);
+        }
     }
 }
 
@@ -150,37 +116,20 @@ Node* TreeModel::GetNode(const QModelIndex& index) const
     return node_root;
 }
 
-Node* TreeModel::FindChild(Node* parent, int row) const
-{
-    auto* node_tmp = parent->left_child;
-    int i = 0;
-
-    while (i != row) {
-        node_tmp = node_tmp->right_sibling;
-        ++i;
-    }
-
-    return node_tmp;
-}
-
 QModelIndex TreeModel::index(int row, int column, const QModelIndex& parent) const
 {
     if (!hasIndex(row, column, parent))
         return QModelIndex();
 
-    auto* node_parent = GetNode(parent);
-    auto* node_tmp = node_parent->left_child;
-    int i = 0;
+    Node* node_parent = node_root;
+    if (parent.isValid())
+        node_parent = GetNode(parent);
 
-    if (node_tmp == nullptr)
+    Node* node = node_parent->children.value(row);
+    if (node)
+        return createIndex(row, column, node);
+    else
         return QModelIndex();
-
-    while (i != row) {
-        ++i;
-        node_tmp = node_tmp->right_sibling;
-    }
-
-    return createIndex(row, column, node_tmp);
 }
 
 QModelIndex TreeModel::parent(const QModelIndex& index) const
@@ -188,41 +137,23 @@ QModelIndex TreeModel::parent(const QModelIndex& index) const
     if (!index.isValid())
         return QModelIndex();
 
-    auto* node = GetNode(index);
+    Node* node = GetNode(index);
+    Node* node_parent = node->parent;
 
-    while (node->mark != 'z') {
-        node = node->previous;
-    }
-
-    auto* parent = node->previous;
-    if (parent == node_root)
+    if (node_parent == node_root)
         return QModelIndex();
 
-    auto* parent_tmp = parent;
-    int i = 0;
-    while (parent_tmp->mark != 'z') {
-        ++i;
-        parent_tmp = parent_tmp->previous;
-    }
-
-    return createIndex(i, 0, parent);
+    return createIndex(node_parent->parent->children.indexOf(node_parent), 0,
+        node_parent);
 }
 
 int TreeModel::rowCount(const QModelIndex& parent) const
 {
-    int i = 0;
-    auto* node_parent = GetNode(parent);
-    auto* node_tmp = node_parent->left_child;
+    Node* node_parent = node_root;
+    if (parent.isValid())
+        node_parent = GetNode(parent);
 
-    //    if (node_tmp == nullptr)
-    //        return i;
-
-    while (node_tmp != nullptr) {
-        node_tmp = node_tmp->right_sibling;
-        ++i;
-    }
-
-    return i;
+    return node_parent->children.size();
 }
 
 QVariant TreeModel::data(const QModelIndex& index, int role) const
@@ -256,7 +187,7 @@ bool TreeModel::setData(const QModelIndex& index, const QVariant& value, int rol
     if (role != Qt::EditRole)
         return false;
 
-    Node* node = GetNode(index);
+    auto* node = GetNode(index);
 
     switch (index.column()) {
     case 0:
@@ -302,6 +233,45 @@ void TreeModel::sort(int column, Qt::SortOrder order)
 {
     emit layoutAboutToBeChanged();
 
+    QModelIndexList model_indexes = persistentIndexList();
+    QList<QPersistentModelIndex> persistent_indexes;
+    for (const auto& model_index : model_indexes) {
+        // The persistent indexes are stored in a separate list so that we can
+        // change the persistent indexes in the model without changing the
+        // model indexes.
+        persistent_indexes.append(QPersistentModelIndex(model_index));
+    }
+
+    // The persistent indexes are sorted according to the order of the model
+    // indexes. This is necessary because the model indexes are sorted
+    // according to the order of the persistent indexes.
+    QList<QModelIndex> source_indexes;
+    for (const auto& persistent_index : persistent_indexes) {
+        source_indexes.append(persistent_index);
+    }
+
+    // The nodes are sorted according to the column and order. The nodes are
+    // sorted in-place.
+    std::function<bool(Node*, Node*)> compare =
+        [this, column, order](Node* lhs, Node* rhs) -> bool {
+        bool result = (column == 0) ? (lhs->name < rhs->name)
+                                    : (lhs->id < rhs->id);
+        return order == Qt::AscendingOrder ? result : !result;
+    };
+    std::function<void(Node*)> sort_children = [&compare,
+                                                   &sort_children](Node* node) {
+        std::sort(node->children.begin(), node->children.end(), compare);
+        for (Node* child : node->children) {
+            sort_children(child);
+        }
+    };
+    sort_children(node_root);
+
+    // The model indexes are changed to match the sorted persistent indexes.
+    for (int i = 0; i < source_indexes.size(); ++i) {
+        changePersistentIndex(source_indexes.at(i), persistent_indexes.at(i));
+    }
+
     emit layoutChanged();
 }
 
@@ -312,30 +282,17 @@ bool TreeModel::insertRows(int row, int count, const QModelIndex& parent)
 
     beginInsertRows(parent, row, row);
 
-    auto* node_parent = GetNode(parent);
-    auto* node_tmp = FindChild(node_parent, row);
+    Node* node_parent = GetNode(parent);
+    QString node_new_name = "New Node";
 
-    auto* node_new = new Node(0, "New Node", "", node_parent);
-
-    if (node_tmp->mark == 'z') {
-        node_parent->left_child = node_new;
-        node_new->previous = node_parent;
-        node_new->mark = 'z';
-
-        node_tmp->previous = node_new;
-        node_new->right_sibling = node_tmp;
-        node_tmp->mark = '\0';
-    } else {
-        node_tmp->previous->right_sibling = node_new;
-        node_new->previous = node_tmp->previous;
-
-        node_new->right_sibling = node_tmp;
-        node_tmp->previous = node_new;
-    }
+    Node* new_node = new Node(0, node_new_name, "");
+    new_node->parent = node_parent;
+    node_parent->children.insert(row, new_node);
 
     endInsertRows();
 
-    InsertRecord(node_parent->id, "New Node");
+    InsertRecord(node_parent->id, node_new_name);
+
     return true;
 }
 
@@ -376,49 +333,21 @@ bool TreeModel::removeRows(int row, int count, const QModelIndex& parent)
     if (row < 0 || count != 1)
         return false;
 
-    auto* node_parent = GetNode(parent);
-    auto* node_tmp = FindChild(node_parent, row);
-    int id = node_tmp->id;
+    Node* node_parent = GetNode(parent);
+    Node* node = node_parent->children.at(row);
+    int id = node->id;
 
     beginRemoveRows(parent, row, row);
 
-    if (node_tmp->left_child != nullptr) {
-        auto* node_tmp2 = node_tmp->right_sibling;
-
-        if (node_tmp2 == nullptr) {
-            node_tmp2 = node_tmp;
-        } else {
-            while (node_tmp2->right_sibling != nullptr) {
-                node_tmp2 = node_tmp2->right_sibling;
-            }
-        }
-
-        node_tmp->left_child->mark = '\0';
-        node_tmp2->right_sibling = node_tmp->left_child;
-        node_tmp->left_child->previous = node_tmp2;
-
-        node_tmp->left_child = nullptr;
-    }
-
-    if (node_tmp->mark != 'z') {
-        if (node_tmp->right_sibling == nullptr) {
-            node_tmp->previous->right_sibling = nullptr;
-        } else {
-            node_tmp->previous->right_sibling = node_tmp->right_sibling;
-            node_tmp->right_sibling->previous = node_tmp->previous;
-        }
-    } else {
-        if (node_tmp->right_sibling == nullptr) {
-            node_tmp->previous->left_child = nullptr;
-        } else {
-            node_tmp->previous->left_child = node_tmp->right_sibling;
-            node_tmp->right_sibling->previous = node_tmp->previous;
-            node_tmp->right_sibling->mark = 'z';
+    if (!node_parent->children.isEmpty()) {
+        for (Node* child : node->children) {
+            child->parent = node_parent;
+            node_parent->children.append(child);
         }
     }
 
-    delete node_tmp;
-    node_tmp = nullptr;
+    node_parent->children.removeOne(node);
+    delete node;
 
     endRemoveRows();
 
