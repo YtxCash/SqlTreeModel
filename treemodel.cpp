@@ -84,18 +84,18 @@ void TreeModel::ConstructTree()
         descendant_id = query.value(0).toInt();
         descendant = hash.value(descendant_id);
 
-        if (ancestor->left_child == nullptr) {
-            ancestor->left_child = descendant;
+        if (ancestor->child == nullptr) {
+            ancestor->child = descendant;
             descendant->previous = ancestor;
             descendant->mark = 'z';
         } else {
-            ancestor = node_root->left_child;
+            ancestor = node_root->child;
 
-            while (ancestor->right_sibling != nullptr) {
-                ancestor = ancestor->right_sibling;
+            while (ancestor->sibling != nullptr) {
+                ancestor = ancestor->sibling;
             }
 
-            ancestor->right_sibling = descendant;
+            ancestor->sibling = descendant;
             descendant->previous = ancestor;
         }
     }
@@ -114,18 +114,18 @@ void TreeModel::ConstructTree()
         ancestor = hash.value(ancestor_id);
         descendant = hash.value(descendant_id);
 
-        if (ancestor->left_child == nullptr) {
-            ancestor->left_child = descendant;
+        if (ancestor->child == nullptr) {
+            ancestor->child = descendant;
             descendant->previous = ancestor;
             descendant->mark = 'z';
         } else {
-            ancestor = ancestor->left_child;
+            ancestor = ancestor->child;
 
-            while (ancestor->right_sibling != nullptr) {
-                ancestor = ancestor->right_sibling;
+            while (ancestor->sibling != nullptr) {
+                ancestor = ancestor->sibling;
             }
 
-            ancestor->right_sibling = descendant;
+            ancestor->sibling = descendant;
             descendant->previous = ancestor;
         }
     }
@@ -152,11 +152,11 @@ Node* TreeModel::GetNode(const QModelIndex& index) const
 
 Node* TreeModel::FindChild(Node* parent, int row) const
 {
-    auto* node_tmp = parent->left_child;
+    auto* node_tmp = parent->child;
     int i = 0;
 
     while (i != row) {
-        node_tmp = node_tmp->right_sibling;
+        node_tmp = node_tmp->sibling;
         ++i;
     }
 
@@ -169,7 +169,7 @@ QModelIndex TreeModel::index(int row, int column, const QModelIndex& parent) con
         return QModelIndex();
 
     auto* node_parent = GetNode(parent);
-    auto* node_tmp = node_parent->left_child;
+    auto* node_tmp = node_parent->child;
     int i = 0;
 
     if (node_tmp == nullptr)
@@ -177,7 +177,7 @@ QModelIndex TreeModel::index(int row, int column, const QModelIndex& parent) con
 
     while (i != row) {
         ++i;
-        node_tmp = node_tmp->right_sibling;
+        node_tmp = node_tmp->sibling;
     }
 
     return createIndex(row, column, node_tmp);
@@ -212,13 +212,13 @@ int TreeModel::rowCount(const QModelIndex& parent) const
 {
     int i = 0;
     auto* node_parent = GetNode(parent);
-    auto* node_tmp = node_parent->left_child;
+    auto* node_tmp = node_parent->child;
 
     //    if (node_tmp == nullptr)
     //        return i;
 
     while (node_tmp != nullptr) {
-        node_tmp = node_tmp->right_sibling;
+        node_tmp = node_tmp->sibling;
         ++i;
     }
 
@@ -315,21 +315,22 @@ bool TreeModel::insertRows(int row, int count, const QModelIndex& parent)
     auto* node_parent = GetNode(parent);
     auto* node_tmp = FindChild(node_parent, row);
 
-    auto* node_new = new Node(0, "New Node", "", node_parent);
+    auto* node_new = new Node(0, "New Node", "");
+    node_new->previous = node_parent;
 
     if (node_tmp->mark == 'z') {
-        node_parent->left_child = node_new;
+        node_parent->child = node_new;
         node_new->previous = node_parent;
         node_new->mark = 'z';
 
         node_tmp->previous = node_new;
-        node_new->right_sibling = node_tmp;
+        node_new->sibling = node_tmp;
         node_tmp->mark = '\0';
     } else {
-        node_tmp->previous->right_sibling = node_new;
+        node_tmp->previous->sibling = node_new;
         node_new->previous = node_tmp->previous;
 
-        node_new->right_sibling = node_tmp;
+        node_new->sibling = node_tmp;
         node_tmp->previous = node_new;
     }
 
@@ -382,38 +383,38 @@ bool TreeModel::removeRows(int row, int count, const QModelIndex& parent)
 
     beginRemoveRows(parent, row, row);
 
-    if (node_tmp->left_child != nullptr) {
-        auto* node_tmp2 = node_tmp->right_sibling;
+    if (node_tmp->child != nullptr) {
+        auto* node_tmp2 = node_tmp->sibling;
 
         if (node_tmp2 == nullptr) {
             node_tmp2 = node_tmp;
         } else {
-            while (node_tmp2->right_sibling != nullptr) {
-                node_tmp2 = node_tmp2->right_sibling;
+            while (node_tmp2->sibling != nullptr) {
+                node_tmp2 = node_tmp2->sibling;
             }
         }
 
-        node_tmp->left_child->mark = '\0';
-        node_tmp2->right_sibling = node_tmp->left_child;
-        node_tmp->left_child->previous = node_tmp2;
+        node_tmp->child->mark = '\0';
+        node_tmp2->sibling = node_tmp->child;
+        node_tmp->child->previous = node_tmp2;
 
-        node_tmp->left_child = nullptr;
+        node_tmp->child = nullptr;
     }
 
     if (node_tmp->mark != 'z') {
-        if (node_tmp->right_sibling == nullptr) {
-            node_tmp->previous->right_sibling = nullptr;
+        if (node_tmp->sibling == nullptr) {
+            node_tmp->previous->sibling = nullptr;
         } else {
-            node_tmp->previous->right_sibling = node_tmp->right_sibling;
-            node_tmp->right_sibling->previous = node_tmp->previous;
+            node_tmp->previous->sibling = node_tmp->sibling;
+            node_tmp->sibling->previous = node_tmp->previous;
         }
     } else {
-        if (node_tmp->right_sibling == nullptr) {
-            node_tmp->previous->left_child = nullptr;
+        if (node_tmp->sibling == nullptr) {
+            node_tmp->previous->child = nullptr;
         } else {
-            node_tmp->previous->left_child = node_tmp->right_sibling;
-            node_tmp->right_sibling->previous = node_tmp->previous;
-            node_tmp->right_sibling->mark = 'z';
+            node_tmp->previous->child = node_tmp->sibling;
+            node_tmp->sibling->previous = node_tmp->previous;
+            node_tmp->sibling->mark = 'z';
         }
     }
 
@@ -575,3 +576,10 @@ bool TreeModel::dropMimeData(const QMimeData* data, Qt::DropAction action, int r
     return true;
 }
 #endif
+
+Node::Node(const int& id, const QString& name, const QString& description)
+    : id(id)
+    , name(name)
+    , description(description)
+{
+}

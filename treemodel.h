@@ -2,23 +2,52 @@
 #include <QMimeData>
 #include <QSqlQuery>
 
-struct Node {
-    int id { 0 };
+class Node {
+
+public:
+    Node(const int& id, const QString& name, const QString& description);
+
+public:
+    bool HasPrevious()
+    {
+        return previous != nullptr;
+    };
+
+    bool HasChild()
+    {
+        return child != nullptr;
+    }
+
+    bool HasSibling()
+    {
+        return sibling != nullptr;
+    }
+
+    bool IsLeaf()
+    {
+        return child == nullptr && sibling == nullptr;
+    }
+
+    bool IsChild()
+    {
+        return previous != nullptr && previous->child == this;
+    }
+
+    bool IsSibling()
+    {
+        return previous != nullptr && previous->sibling == this;
+    }
+
+public:
     QChar mark { '\0' };
+    int id { 0 };
     QString name { "" };
     QString description { "" };
 
+public:
     Node* previous { nullptr };
-    Node* left_child { nullptr };
-    Node* right_sibling { nullptr };
-
-    Node(const int& id, const QString& name, const QString& description,
-        Node* parent = nullptr, Node* left_child = nullptr, Node* right_sibling = nullptr)
-        : id(id)
-        , name(name)
-        , description(description)
-    {
-    }
+    Node* child { nullptr };
+    Node* sibling { nullptr };
 };
 
 struct TableInfo {
