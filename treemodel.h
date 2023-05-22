@@ -88,6 +88,9 @@ public:
     bool setData(const QModelIndex& index, const QVariant& value,
         int role = Qt::EditRole) override;
 
+    QVariant headerData(int section, Qt::Orientation orientation,
+        int role = Qt::DisplayRole) const override;
+
     void sort(int column, Qt::SortOrder order) override;
 
     bool insertRows(int row, int count,

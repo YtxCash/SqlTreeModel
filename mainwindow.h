@@ -24,6 +24,11 @@ private slots:
 
     void on_btnAppend_clicked();
 
+    void on_treeView_clicked(const QModelIndex& index);
+
+private slots:
+    void CurrentChanged(const QModelIndex& index);
+
 private:
     Ui::MainWindow* ui;
     TreeModel* tree_model;

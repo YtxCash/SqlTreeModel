@@ -27,6 +27,8 @@ MainWindow::MainWindow(QWidget* parent)
 
     ui->treeView->setExpandsOnDoubleClick(true);
     ui->treeView->header()->setStretchLastSection(true);
+
+    connect(ui->treeView->selectionModel(), &QItemSelectionModel::currentChanged, this, &MainWindow::CurrentChanged);
 }
 
 MainWindow::~MainWindow()
@@ -63,4 +65,14 @@ void MainWindow::on_btnAppend_clicked()
         return;
 
     tree_model->insertRows(ui->treeView->currentIndex().row(), 1, selected_index);
+}
+
+void MainWindow::CurrentChanged(const QModelIndex& index)
+{
+    qDebug() << index.data().toString() << "current changed";
+}
+
+void MainWindow::on_treeView_clicked(const QModelIndex& index)
+{
+    qDebug() << index.data().toString() << "click";
 }

@@ -139,13 +139,11 @@ void TreeModel::ConstructTree()
 
 Node* TreeModel::GetNode(const QModelIndex& index) const
 {
-    if (index.isValid()) {
-        Node* node = static_cast<Node*>(index.internalPointer());
-        if (node)
-            return node;
-    }
-
-    return root;
+    Node* node = static_cast<Node*>(index.internalPointer());
+    if (node)
+        return node;
+    else
+        return root;
 }
 
 Node* TreeModel::GetNode(Node* parent, int row) const
@@ -242,7 +240,7 @@ QVariant TreeModel::data(const QModelIndex& index, int role) const
 
 bool TreeModel::setData(const QModelIndex& index, const QVariant& value, int role)
 {
-    if (role != Qt::EditRole)
+    if (!index.isValid() || role != Qt::EditRole)
         return false;
 
     Node* node = GetNode(index);
@@ -447,6 +445,17 @@ bool TreeModel::DeleteRecord(int id)
 bool TreeModel::SortRecord()
 {
     return true;
+}
+
+QVariant TreeModel::headerData(int section, Qt::Orientation orientation, int role) const
+{
+    if (role != Qt::DisplayRole)
+        return QVariant();
+
+    if (orientation == Qt::Horizontal)
+        return QStringLiteral("Column %1").arg(section);
+    else
+        return QVariant();
 }
 
 Qt::ItemFlags TreeModel::flags(const QModelIndex& index) const
