@@ -163,7 +163,10 @@ QModelIndex TreeModel::index(int row, int column, const QModelIndex& parent) con
     if (!hasIndex(row, column, parent))
         return QModelIndex();
 
-    auto* node_parent = GetNode(parent);
+    auto* node_parent = root;
+    if (parent.isValid())
+        node_parent = GetNode(parent);
+
     auto* node = GetNode(node_parent, row);
 
     if (node == nullptr)
@@ -200,7 +203,10 @@ QModelIndex TreeModel::parent(const QModelIndex& index) const
 int TreeModel::rowCount(const QModelIndex& parent) const
 {
     int i = 0;
-    auto* node_parent = GetNode(parent);
+    auto* node_parent = root;
+    if (parent.isValid())
+        node_parent = GetNode(parent);
+
     auto* node_tmp = node_parent->lchild;
 
     while (node_tmp != nullptr) {
@@ -295,7 +301,9 @@ bool TreeModel::insertRows(int row, int count, const QModelIndex& parent)
     if (count != 1)
         return false;
 
-    auto* node_parent = GetNode(parent);
+    auto* node_parent = root;
+    if (parent.isValid())
+        node_parent = GetNode(parent);
 
     InsertRecord(node_parent->id, "New Node");
 
@@ -368,7 +376,10 @@ bool TreeModel::removeRows(int row, int count, const QModelIndex& parent)
     if (row < 0 || count != 1)
         return false;
 
-    auto* node_parent = GetNode(parent);
+    auto* node_parent = root;
+    if (parent.isValid())
+        node_parent = GetNode(parent);
+
     auto* node = GetNode(node_parent, row);
     int id = node->id;
 
