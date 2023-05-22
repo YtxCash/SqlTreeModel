@@ -67,3 +67,12 @@ void MainWindow::on_treeView_clicked(const QModelIndex& index)
 {
     qDebug() << index.data().toString() << "click";
 }
+
+void MainWindow::on_btnAppend_clicked()
+{
+    auto selected_index = ui->treeView->currentIndex();
+    if (!selected_index.isValid())
+        selected_index = QModelIndex();
+
+    tree_model->insertRows(0, 1, selected_index);
+}
