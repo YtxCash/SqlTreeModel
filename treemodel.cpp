@@ -101,15 +101,6 @@ void TreeModel::ConstructTree()
     }
 }
 
-Node* TreeModel::GetNode(const QModelIndex& index) const
-{
-    auto* node = static_cast<Node*>(index.internalPointer());
-    if (node)
-        return node;
-    else
-        return root;
-}
-
 QModelIndex TreeModel::index(int row, int column, const QModelIndex& parent) const
 {
     if (!hasIndex(row, column, parent))
@@ -273,20 +264,25 @@ void TreeModel::sort(int column, Qt::SortOrder order)
     emit layoutChanged();
 }
 
+Node* TreeModel::GetNode(const QModelIndex& index) const
+{
+    auto* node = static_cast<Node*>(index.internalPointer());
+    if (node)
+        return node;
+    else
+        return root;
+}
+
 bool TreeModel::insertRows(int row, int count, const QModelIndex& parent)
 {
     if (count != 1)
         return false;
-
-    if (row == -1)
-        row = 0;
 
     auto* node_parent = root;
     if (parent.isValid())
         node_parent = GetNode(parent);
 
     InsertRecord(node_parent->id, "New Node");
-
     auto* new_node = new Node(id, "New Node", "");
 
     beginInsertRows(parent, row, row);
