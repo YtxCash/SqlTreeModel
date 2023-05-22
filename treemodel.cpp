@@ -61,8 +61,6 @@ void TreeModel::ConstructTree()
         qWarning() << "Error construct TABLE NODE:" << query.lastError().text();
     } else if (!query.isActive()) {
         qWarning() << "TABLE NODE is not active";
-    } else {
-        qDebug() << "Construct TABLE NODE successfully";
     }
 
     query.prepare(QString("SELECT descendant FROM %1 "
@@ -132,8 +130,6 @@ void TreeModel::ConstructTree()
         qWarning() << "Error construct TABLE NODE_PATH:" << query.lastError().text();
     } else if (!query.isActive()) {
         qWarning() << "TABLE NODE_PATHis not active";
-    } else {
-        qDebug() << "Construct TABLE NODE_PATH successfully";
     }
 }
 
@@ -296,11 +292,11 @@ bool TreeModel::insertRows(int row, int count, const QModelIndex& parent)
     if (row < 0 || count != 1)
         return false;
 
-    beginInsertRows(parent, row, row);
-
     auto* node_parent = GetNode(parent);
-    auto* node = GetNode(node_parent, row);
     auto* node_new = new Node(0, "New Node", "");
+    auto* node = GetNode(node_parent, row);
+
+    beginInsertRows(parent, row, row);
 
     if (node->IsLChild()) {
         node_parent->lchild = node_new;
