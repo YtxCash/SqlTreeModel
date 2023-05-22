@@ -10,7 +10,7 @@ struct Node {
     Node* parent { nullptr };
     QList<Node*> children;
 
-    Node(const int& id, const QString& name, const QString& description)
+    Node(int id, QString name, QString description)
         : id(id)
         , name(name)
         , description(description)
@@ -23,7 +23,7 @@ struct TableInfo {
     QString node { "" };
     QString node_path { "" };
 
-    TableInfo(const QString& database, const QString& node, const QString& node_path)
+    TableInfo(QString database, QString node, QString node_path)
         : database(database)
         , node(node)
         , node_path(node_path)
@@ -68,9 +68,9 @@ public:
 #endif
 
 private:
-    bool InsertRecord(const int id_parent, const QString& name);
-    bool UpdateRecord(const int id, const QString& column, const QString& name);
-    bool DeleteRecord(const int id);
+    bool InsertRecord(int id_parent, QString name);
+    bool UpdateRecord(int id, QString column, QString string);
+    bool DeleteRecord(int id);
     bool SortRecord();
 
     void ConstructTree();
@@ -78,7 +78,7 @@ private:
     Node* GetNode(const QModelIndex& index) const;
 
 private:
-    Node* node_root;
+    Node* root;
 
     QSqlDatabase db;
     TableInfo table_info;

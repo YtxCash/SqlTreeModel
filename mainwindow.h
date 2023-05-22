@@ -27,6 +27,8 @@ private slots:
 private slots:
     void CurrentChanged(const QModelIndex& index);
 
+    void on_btnAppend_clicked();
+
 private:
     Ui::MainWindow* ui;
     TreeModel* tree_model;

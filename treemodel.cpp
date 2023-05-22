@@ -5,7 +5,7 @@
 
 TreeModel::TreeModel(const TableInfo& table, QObject* parent)
     : QAbstractItemModel(parent)
-    , node_root(nullptr)
+    , root(nullptr)
     , table_info(table)
 {
     db = QSqlDatabase::addDatabase("QSQLITE");
@@ -26,7 +26,7 @@ TreeModel::TreeModel(const TableInfo& table, QObject* parent)
 
 TreeModel::~TreeModel()
 {
-    delete node_root;
+    delete root;
     db.close();
 }
 
@@ -42,7 +42,7 @@ void TreeModel::ConstructTree()
                    << query.lastError().text();
     }
 
-    node_root = new Node(-1, "root", "");
+    root = new Node(-1, "root", "");
 
     QHash<int, Node*> hash;
 
@@ -61,8 +61,6 @@ void TreeModel::ConstructTree()
         qWarning() << "Error construct TABLE NODE:" << query.lastError().text();
     } else if (!query.isActive()) {
         qWarning() << "TABLE NODE is not active";
-    } else {
-        qDebug() << "Construct TABLE NODE successfully";
     }
 
     query.prepare(QString("SELECT ancestor, descendant FROM %1 WHERE distance = 1").arg(table_info.node_path));
@@ -93,27 +91,23 @@ void TreeModel::ConstructTree()
         qWarning() << "Error construct TABLE NODE_PATH:" << query.lastError().text();
     } else if (!query.isActive()) {
         qWarning() << "TABLE NODE_PATHis not active";
-    } else {
-        qDebug() << "Construct TABLE NODE_PATH successfully";
     }
 
-    for (auto* node : qAsConst(hash)) {
+    for (auto* node : hash) {
         if (!node->parent) {
-            node->parent = node_root;
-            node_root->children.append(node);
+            node->parent = root;
+            root->children.append(node);
         }
     }
 }
 
 Node* TreeModel::GetNode(const QModelIndex& index) const
 {
-    if (index.isValid()) {
-        Node* node = static_cast<Node*>(index.internalPointer());
-        if (node)
-            return node;
-    }
-
-    return node_root;
+    auto* node = static_cast<Node*>(index.internalPointer());
+    if (node)
+        return node;
+    else
+        return root;
 }
 
 QModelIndex TreeModel::index(int row, int column, const QModelIndex& parent) const
@@ -121,11 +115,11 @@ QModelIndex TreeModel::index(int row, int column, const QModelIndex& parent) con
     if (!hasIndex(row, column, parent))
         return QModelIndex();
 
-    Node* node_parent = node_root;
+    auto* node_parent = root;
     if (parent.isValid())
         node_parent = GetNode(parent);
 
-    Node* node = node_parent->children.value(row);
+    auto* node = node_parent->children.value(row);
     if (node)
         return createIndex(row, column, node);
     else
@@ -137,10 +131,14 @@ QModelIndex TreeModel::parent(const QModelIndex& index) const
     if (!index.isValid())
         return QModelIndex();
 
-    Node* node = GetNode(index);
-    Node* node_parent = node->parent;
+    auto* node = GetNode(index);
 
-    if (node_parent == node_root)
+    if (node == root)
+        return QModelIndex();
+
+    auto* node_parent = node->parent;
+
+    if (node_parent == root)
         return QModelIndex();
 
     return createIndex(node_parent->parent->children.indexOf(node_parent), 0,
@@ -149,7 +147,7 @@ QModelIndex TreeModel::parent(const QModelIndex& index) const
 
 int TreeModel::rowCount(const QModelIndex& parent) const
 {
-    Node* node_parent = node_root;
+    auto* node_parent = root;
     if (parent.isValid())
         node_parent = GetNode(parent);
 
@@ -161,7 +159,7 @@ QVariant TreeModel::data(const QModelIndex& index, int role) const
     if (!index.isValid())
         return QVariant();
 
-    Node* node = GetNode(index);
+    auto* node = GetNode(index);
 
     if (role == Qt::DisplayRole || role == Qt::EditRole) {
         switch (index.column()) {
@@ -214,7 +212,7 @@ int TreeModel::columnCount(const QModelIndex& parent) const
     return 3;
 }
 
-bool TreeModel::UpdateRecord(const int id, const QString& column, const QString& name)
+bool TreeModel::UpdateRecord(int id, QString column, QString name)
 {
 
     QSqlQuery query = QSqlQuery(db);
@@ -265,7 +263,7 @@ void TreeModel::sort(int column, Qt::SortOrder order)
             sort_children(child);
         }
     };
-    sort_children(node_root);
+    sort_children(root);
 
     // The model indexes are changed to match the sorted persistent indexes.
     for (int i = 0; i < source_indexes.size(); ++i) {
@@ -277,26 +275,31 @@ void TreeModel::sort(int column, Qt::SortOrder order)
 
 bool TreeModel::insertRows(int row, int count, const QModelIndex& parent)
 {
-    if (row < 0 || count != 1)
+    if (count != 1)
         return false;
+
+    if (row == -1)
+        row = 0;
+
+    auto* node_parent = root;
+    if (parent.isValid())
+        node_parent = GetNode(parent);
+
+    auto* new_node = new Node(0, "New Node", "");
 
     beginInsertRows(parent, row, row);
 
-    Node* node_parent = GetNode(parent);
-    QString node_new_name = "New Node";
-
-    Node* new_node = new Node(0, node_new_name, "");
     new_node->parent = node_parent;
     node_parent->children.insert(row, new_node);
 
     endInsertRows();
 
-    InsertRecord(node_parent->id, node_new_name);
+    InsertRecord(node_parent->id, "New Node");
 
     return true;
 }
 
-bool TreeModel::InsertRecord(const int id_parent, const QString& name)
+bool TreeModel::InsertRecord(int id_parent, QString name)
 {
 
     QSqlQuery query = QSqlQuery(db);
@@ -333,7 +336,10 @@ bool TreeModel::removeRows(int row, int count, const QModelIndex& parent)
     if (row < 0 || count != 1)
         return false;
 
-    Node* node_parent = GetNode(parent);
+    auto* node_parent = root;
+    if (parent.isValid())
+        node_parent = GetNode(parent);
+
     Node* node = node_parent->children.at(row);
     int id = node->id;
 
