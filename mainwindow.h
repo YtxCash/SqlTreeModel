@@ -22,8 +22,6 @@ private slots:
 
     void on_btnInsert_clicked();
 
-    void on_btnAppend_clicked();
-
     void on_treeView_clicked(const QModelIndex& index);
 
 private slots:

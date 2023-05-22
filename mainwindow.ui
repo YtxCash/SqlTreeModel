@@ -15,14 +15,7 @@
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout">
-    <item row="1" column="0">
-     <widget class="QPushButton" name="btnInsert">
-      <property name="text">
-       <string>Insert Row</string>
-      </property>
-     </widget>
-    </item>
-    <item row="3" column="0">
+    <item row="2" column="0">
      <widget class="QPushButton" name="btnDelete">
       <property name="text">
        <string>Delete Row</string>
@@ -32,10 +25,10 @@
     <item row="0" column="0">
      <widget class="QTreeView" name="treeView"/>
     </item>
-    <item row="2" column="0">
-     <widget class="QPushButton" name="btnAppend">
+    <item row="1" column="0">
+     <widget class="QPushButton" name="btnInsert">
       <property name="text">
-       <string>Append Row</string>
+       <string>Insert Row</string>
       </property>
      </widget>
     </item>

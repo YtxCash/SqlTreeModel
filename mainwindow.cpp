@@ -53,18 +53,9 @@ void MainWindow::on_btnInsert_clicked()
 {
     auto selected_index = ui->treeView->currentIndex();
     if (!selected_index.isValid())
-        return;
+        selected_index = QModelIndex();
 
     tree_model->insertRows(ui->treeView->currentIndex().row(), 1, selected_index.parent());
-}
-
-void MainWindow::on_btnAppend_clicked()
-{
-    auto selected_index = ui->treeView->currentIndex();
-    if (!selected_index.isValid())
-        return;
-
-    tree_model->insertRows(ui->treeView->currentIndex().row(), 1, selected_index);
 }
 
 void MainWindow::CurrentChanged(const QModelIndex& index)

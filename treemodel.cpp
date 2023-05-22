@@ -144,6 +144,9 @@ Node* TreeModel::GetNode(const QModelIndex& index) const
 
 Node* TreeModel::GetNode(Node* parent, int row) const
 {
+    if (row == -1)
+        return parent;
+
     auto* node = parent->lchild;
     int i = 0;
 
@@ -289,16 +292,24 @@ void TreeModel::sort(int column, Qt::SortOrder order)
 
 bool TreeModel::insertRows(int row, int count, const QModelIndex& parent)
 {
-    if (row < 0 || count != 1)
+    if (count != 1)
         return false;
 
     auto* node_parent = GetNode(parent);
     auto* node_new = new Node(0, "New Node", "");
+
     auto* node = GetNode(node_parent, row);
+
+    if (node == root) {
+        row = 0;
+    }
 
     beginInsertRows(parent, row, row);
 
-    if (node->IsLChild()) {
+    if (node == root) {
+        node->lchild = node_new;
+        node_new->previous = node;
+    } else if (node->IsLChild()) {
         node_parent->lchild = node_new;
         node_new->previous = node_parent;
 
