@@ -124,4 +124,5 @@ private:
 
     QSqlDatabase db;
     TableInfo table_info;
+    int id;
 };

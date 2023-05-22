@@ -296,7 +296,10 @@ bool TreeModel::insertRows(int row, int count, const QModelIndex& parent)
         return false;
 
     auto* node_parent = GetNode(parent);
-    auto* node_new = new Node(0, "New Node", "");
+
+    InsertRecord(node_parent->id, "New Node");
+
+    auto* node_new = new Node(id, "New Node", "");
 
     auto* node = GetNode(node_parent, row);
 
@@ -325,7 +328,6 @@ bool TreeModel::insertRows(int row, int count, const QModelIndex& parent)
 
     endInsertRows();
 
-    InsertRecord(node_parent->id, "New Node");
     return true;
 }
 
@@ -342,7 +344,7 @@ bool TreeModel::InsertRecord(int id_parent, QString name)
         return false;
     }
 
-    int id = query.lastInsertId().toInt();
+    id = query.lastInsertId().toInt();
 
     query.prepare(QString(
         "INSERT INTO %1 (ancestor, descendant, distance) "
