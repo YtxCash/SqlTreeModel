@@ -273,6 +273,23 @@ Node* TreeModel::GetNode(const QModelIndex& index) const
         return root;
 }
 
+Node* TreeModel::FindNode(Node* parent, int id)
+{
+    if (!parent)
+        parent = root;
+
+    for (Node* child : parent->children) {
+        if (child->id == id)
+            return child;
+
+        Node* foundNode = FindNode(child, id);
+        if (foundNode)
+            return foundNode;
+    }
+
+    return nullptr;
+}
+
 bool TreeModel::insertRows(int row, int count, const QModelIndex& parent)
 {
     if (count != 1)
@@ -414,7 +431,7 @@ Qt::ItemFlags TreeModel::flags(const QModelIndex& index) const
         return default_flags;
 }
 
-#if 0
+#if 1
 QStringList TreeModel::mimeTypes() const
 {
     QStringList types;
@@ -446,12 +463,12 @@ bool TreeModel::IsDescendantOf(Node* possibleDescendant, Node* possibleAncestor)
         return false;
     }
 
-    Node* currentNode = possibleDescendant->previous;
+    Node* currentNode = possibleDescendant->parent;
     while (currentNode) {
         if (currentNode == possibleAncestor) {
             return true;
         }
-        currentNode = currentNode->previous;
+        currentNode = currentNode->parent;
     }
     return false;
 }
@@ -484,7 +501,7 @@ bool TreeModel::dropMimeData(const QMimeData* data, Qt::DropAction action, int r
     Node* moved_node;
 
     for (int itemId : newItems) {
-        moved_node = FindNode(itemId, node_root);
+        moved_node = FindNode(root, itemId);
         if (moved_node) {
             // 如果目标父节点与移动节点的当前父节点相同，跳过此节点
             if (moved_node->parent == node_parent || IsDescendantOf(node_parent, moved_node)) {

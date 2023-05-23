@@ -59,7 +59,7 @@ public:
     Qt::ItemFlags flags(const QModelIndex& index) const override;
 
     // 暂时不考虑拖动
-#if 0
+#if 1
     QStringList mimeTypes() const override;
     QMimeData* mimeData(const QModelIndexList& indexes) const override;
     bool dropMimeData(const QMimeData* data, Qt::DropAction action, int row,
@@ -76,6 +76,7 @@ private:
     void ConstructTree();
 
     Node* GetNode(const QModelIndex& index) const;
+    Node* FindNode(Node* parent, int id);
 
 private:
     Node* root;
