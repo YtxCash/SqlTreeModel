@@ -295,14 +295,14 @@ Node* TreeModel::GetChild(Node* parent, int row) const
 
 Node* TreeModel::GetDescendant(Node* parent, int id) const
 {
-    if (parent) {
-        if (parent->id == id)
-            return parent;
-        GetDescendant(parent->lchild, id);
-        GetDescendant(parent->rsibling, id);
-    }
-
-    return nullptr;
+    if (parent->id == id)
+        return parent;
+    else if (parent->lchild != nullptr) {
+        return GetDescendant(parent->lchild, id);
+    } else if (parent->rsibling != nullptr) {
+        return GetDescendant(parent->rsibling, id);
+    } else
+        return nullptr;
 }
 
 bool TreeModel::insertRows(int row, int count, const QModelIndex& parent)
@@ -498,7 +498,7 @@ Qt::DropActions TreeModel::supportedDropActions() const
 QStringList TreeModel::mimeTypes() const
 {
     QStringList types;
-    types << "application/node";
+    types << "application/id";
     return types;
 }
 
@@ -508,7 +508,7 @@ bool TreeModel::canDropMimeData(const QMimeData* data, Qt::DropAction action, in
     Q_UNUSED(column);
     Q_UNUSED(parent);
 
-    if (action != Qt::MoveAction || !data->hasFormat("application/node"))
+    if (action != Qt::MoveAction || !data->hasFormat("application/id"))
         return false;
     return true;
 }
@@ -520,14 +520,21 @@ QMimeData* TreeModel::mimeData(const QModelIndexList& indexes) const
 
     QDataStream stream(&data_encoded, QIODevice::WriteOnly);
 
+    QList<Node*> nodes;
+
     for (const QModelIndex& index : indexes) {
         if (index.isValid()) {
             auto* node = static_cast<Node*>(index.internalPointer());
-            stream << node->id;
+            if (!nodes.contains(node))
+                nodes << node;
         }
     }
 
-    data_mime->setData("application/node", data_encoded);
+    for (const Node* node : nodes) {
+        stream << node->id;
+    }
+
+    data_mime->setData("application/id", data_encoded);
     return data_mime;
 }
 
@@ -558,7 +565,7 @@ bool TreeModel::dropMimeData(const QMimeData* data, Qt::DropAction action, int r
     else if (action != Qt::MoveAction)
         return false;
 
-    QByteArray data_encoded = data->data("application/node");
+    QByteArray data_encoded = data->data("application/id");
     QDataStream stream(&data_encoded, QIODevice::ReadOnly);
 
     QList<int> list_id;
@@ -569,20 +576,19 @@ bool TreeModel::dropMimeData(const QMimeData* data, Qt::DropAction action, int r
         list_id << id;
     }
 
+    //    if (row == -1)
+    //        row = 0;
     auto* node_parent = GetNode(parent);
-    if (row == -1)
-        row = 0;
     auto* node = GetChild(node_parent, row);
-
     Node* node_moved;
 
     for (int id : list_id) {
         node_moved = GetDescendant(root, id);
         if (node_moved) {
             // 如果目标父节点与移动节点的当前父节点相同，跳过此节点
-            if (IsChild(node_parent, node)) {
-                continue;
-            }
+            //            if (IsChild(node_parent, node)) {
+            //                continue;
+            //            }
 
             //            QModelIndex movedIndex = createIndex(
             //                node->parent->children.indexOf(node), 0, node);
