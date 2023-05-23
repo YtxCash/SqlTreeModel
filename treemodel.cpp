@@ -301,6 +301,8 @@ Node* TreeModel::GetDescendant(Node* parent, int id) const
         GetDescendant(parent->lchild, id);
         GetDescendant(parent->rsibling, id);
     }
+
+    return nullptr;
 }
 
 bool TreeModel::insertRows(int row, int count, const QModelIndex& parent)
