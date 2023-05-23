@@ -159,7 +159,7 @@ QModelIndex TreeModel::parent(const QModelIndex& index) const
     }
 
     auto* node_parent = node->previous;
-    if (node_parent == root)
+    if (node_parent == root || !node_parent)
         return QModelIndex();
 
     node = node_parent;
@@ -267,10 +267,13 @@ void TreeModel::sort(int column, Qt::SortOrder order)
 
 Node* TreeModel::GetNode(const QModelIndex& index) const
 {
-    if (!index.isValid())
-        return root;
-    else
-        return static_cast<Node*>(index.internalPointer());
+    if (index.isValid()) {
+        auto* node = static_cast<Node*>(index.internalPointer());
+        if (node)
+            return node;
+    }
+
+    return root;
 }
 
 Node* TreeModel::GetChild(Node* parent, int row) const
@@ -461,6 +464,11 @@ QVariant TreeModel::headerData(int section, Qt::Orientation orientation, int rol
         return QStringLiteral("Column %1").arg(section);
 
     return QVariant();
+}
+
+bool TreeModel::setHeaderData(int section, Qt::Orientation orientation, const QVariant& value, int role)
+{
+    return true;
 }
 
 Qt::ItemFlags TreeModel::flags(const QModelIndex& index) const
