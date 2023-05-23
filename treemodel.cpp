@@ -21,6 +21,10 @@ TreeModel::TreeModel(const TableInfo& table, QObject* parent)
         return;
     }
 
+    headers << "Account"
+            << "Id"
+            << "Description";
+
     ConstructTree();
 }
 
@@ -193,7 +197,7 @@ QVariant TreeModel::data(const QModelIndex& index, int role) const
 
     auto* node = static_cast<Node*>(index.internalPointer());
 
-    if (role == Qt::DisplayRole || role == Qt::EditRole) {
+    if (role == Qt::DisplayRole) {
         switch (index.column()) {
         case 0:
             return node->name;
@@ -240,7 +244,7 @@ bool TreeModel::setData(const QModelIndex& index, const QVariant& value, int rol
 int TreeModel::columnCount(const QModelIndex& parent) const
 {
     Q_UNUSED(parent)
-    return 3;
+    return headers.size();
 }
 
 bool TreeModel::UpdateRecord(int id, QString column, QString string)
@@ -461,7 +465,7 @@ bool TreeModel::SortRecord()
 QVariant TreeModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
     if (orientation == Qt::Horizontal && role == Qt::DisplayRole)
-        return QStringLiteral("Column %1").arg(section);
+        return headers.at(section);
 
     return QVariant();
 }
@@ -492,8 +496,15 @@ Qt::DropActions TreeModel::supportedDropActions() const
 QStringList TreeModel::mimeTypes() const
 {
     QStringList types;
-    types << "application/x-qabstractitemmodeldatalist";
+    types << "application/tree.model";
     return types;
+}
+
+bool TreeModel::canDropMimeData(const QMimeData* data, Qt::DropAction action, int row, int column, const QModelIndex& parent) const
+{
+    Q_UNUSED(row);
+    Q_UNUSED(column);
+    Q_UNUSED(parent);
 }
 
 QMimeData* TreeModel::mimeData(const QModelIndexList& indexes) const
@@ -510,7 +521,7 @@ QMimeData* TreeModel::mimeData(const QModelIndexList& indexes) const
         }
     }
 
-    data_mime->setData("application/x-qabstractitemmodeldatalist", data_encoded);
+    data_mime->setData("application/tree.model", data_encoded);
     return data_mime;
 }
 
@@ -536,13 +547,13 @@ bool TreeModel::dropMimeData(const QMimeData* data, Qt::DropAction action, int r
     if (action == Qt::IgnoreAction)
         return true;
 
-    if (!data->hasFormat("application/x-qabstractitemmodeldatalist"))
+    if (!data->hasFormat("application/tree.model"))
         return false;
 
     if (column != 0)
         return false;
 
-    QByteArray data_encoded = data->data("application/x-qabstractitemmodeldatalist");
+    QByteArray data_encoded = data->data("application/tree.model");
     QDataStream stream(&data_encoded, QIODevice::ReadOnly);
 
     QList<int> newItems;
