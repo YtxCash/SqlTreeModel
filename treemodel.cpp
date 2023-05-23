@@ -293,14 +293,14 @@ Node* TreeModel::GetChild(Node* parent, int row) const
     return node;
 }
 
-Node* TreeModel::GetChild(int id, Node* parent) const
+Node* TreeModel::GetDescendant(Node* parent, int id) const
 {
-    auto* node = parent->lchild;
-
-    while (id != node->id)
-        node = node->rsibling;
-
-    return node;
+    if (parent) {
+        if (parent->id == id)
+            return parent;
+        GetDescendant(parent->lchild, id);
+        GetDescendant(parent->rsibling, id);
+    }
 }
 
 bool TreeModel::insertRows(int row, int count, const QModelIndex& parent)
@@ -311,25 +311,25 @@ bool TreeModel::insertRows(int row, int count, const QModelIndex& parent)
     auto* node_parent = GetNode(parent);
     InsertRecord(node_parent->id, "New Node");
 
-    auto* node_new = new Node(id, "New Node", "");
+    auto* node_moved = new Node(id, "New Node", "");
     auto* node = GetChild(node_parent, row);
 
     beginInsertRows(parent, row, row);
     if (node == nullptr) {
-        node_parent->lchild = node_new;
-        node_new->previous = node_parent;
+        node_parent->lchild = node_moved;
+        node_moved->previous = node_parent;
     } else if (node->IsLChild()) {
-        node_parent->lchild = node_new;
-        node_new->previous = node_parent;
+        node_parent->lchild = node_moved;
+        node_moved->previous = node_parent;
 
-        node->previous = node_new;
-        node_new->rsibling = node;
+        node->previous = node_moved;
+        node_moved->rsibling = node;
     } else {
-        node->previous->rsibling = node_new;
-        node_new->previous = node->previous;
+        node->previous->rsibling = node_moved;
+        node_moved->previous = node->previous;
 
-        node_new->rsibling = node;
-        node->previous = node_new;
+        node_moved->rsibling = node;
+        node->previous = node_moved;
     }
 
     endInsertRows();
@@ -490,13 +490,13 @@ Qt::ItemFlags TreeModel::flags(const QModelIndex& index) const
 
 Qt::DropActions TreeModel::supportedDropActions() const
 {
-    return Qt::MoveAction | Qt::CopyAction;
+    return Qt::MoveAction;
 }
 
 QStringList TreeModel::mimeTypes() const
 {
     QStringList types;
-    types << "application/tree.model";
+    types << "application/node";
     return types;
 }
 
@@ -505,29 +505,33 @@ bool TreeModel::canDropMimeData(const QMimeData* data, Qt::DropAction action, in
     Q_UNUSED(row);
     Q_UNUSED(column);
     Q_UNUSED(parent);
+
+    if (action != Qt::MoveAction || !data->hasFormat("application/node"))
+        return false;
+    return true;
 }
 
 QMimeData* TreeModel::mimeData(const QModelIndexList& indexes) const
 {
     QMimeData* data_mime = new QMimeData();
-
     QByteArray data_encoded;
+
     QDataStream stream(&data_encoded, QIODevice::WriteOnly);
 
     for (const QModelIndex& index : indexes) {
         if (index.isValid()) {
-            Node* node = GetNode(index);
+            auto* node = static_cast<Node*>(index.internalPointer());
             stream << node->id;
         }
     }
 
-    data_mime->setData("application/tree.model", data_encoded);
+    data_mime->setData("application/node", data_encoded);
     return data_mime;
 }
 
-bool TreeModel::IsDescendantOf(Node* possibleDescendant, Node* possibleAncestor) const
+bool TreeModel::IsChild(Node* node_parent, Node* node) const
 {
-    if (!possibleDescendant || !possibleAncestor) {
+    if (!node_parent || !node) {
         return false;
     }
 
@@ -544,50 +548,64 @@ bool TreeModel::IsDescendantOf(Node* possibleDescendant, Node* possibleAncestor)
 bool TreeModel::dropMimeData(const QMimeData* data, Qt::DropAction action, int row,
     int column, const QModelIndex& parent)
 {
+    if (!canDropMimeData(data, action, row, column, parent))
+        return false;
+
     if (action == Qt::IgnoreAction)
         return true;
-
-    if (!data->hasFormat("application/tree.model"))
+    else if (action != Qt::MoveAction)
         return false;
 
-    if (column != 0)
-        return false;
-
-    QByteArray data_encoded = data->data("application/tree.model");
+    QByteArray data_encoded = data->data("application/node");
     QDataStream stream(&data_encoded, QIODevice::ReadOnly);
 
-    QList<int> newItems;
-    int newItem;
+    QList<int> list_id;
+    int id = 0;
 
     while (!stream.atEnd()) {
-        stream >> newItem;
-        newItems << newItem;
+        stream >> id;
+        list_id << id;
     }
 
-    auto* node_parent = root;
-    if (parent.isValid())
-        node_parent = GetNode(parent);
+    auto* node_parent = GetNode(parent);
+    if (row == -1)
+        row = 0;
+    auto* node = GetChild(node_parent, row);
 
-    //    int beginRow = row == -1 ? node_parent->children.count() : row;
+    Node* node_moved;
 
-    Node* moved_node;
-
-    for (int itemId : newItems) {
-        moved_node = GetChild(itemId, node_parent);
-        if (moved_node) {
+    for (int id : list_id) {
+        node_moved = GetDescendant(root, id);
+        if (node_moved) {
             // 如果目标父节点与移动节点的当前父节点相同，跳过此节点
-            //            if (moved_node->parent == node_parent || IsDescendantOf(node_parent, moved_node)) {
-            //                continue;
-            //            }
+            if (IsChild(node_parent, node)) {
+                continue;
+            }
+
             //            QModelIndex movedIndex = createIndex(
-            //                moved_node->parent->children.indexOf(moved_node), 0, moved_node);
+            //                node->parent->children.indexOf(node), 0, node);
             //            beginRemoveRows(movedIndex.parent(), movedIndex.row(), movedIndex.row());
-            //            moved_node->parent->children.removeOne(moved_node);
+            //            node->parent->children.removeOne(node);
             //            endRemoveRows();
 
-            //            beginInsertRows(parent, beginRow, beginRow);
-            //            node_parent->children.insert(beginRow, moved_node);
-            //            moved_node->parent = node_parent;
+            beginInsertRows(parent, row, row);
+            if (node == nullptr) {
+                node_parent->lchild = node_moved;
+                node_moved->previous = node_parent;
+            } else if (node->IsLChild()) {
+                node_parent->lchild = node_moved;
+                node_moved->previous = node_parent;
+
+                node->previous = node_moved;
+                node_moved->rsibling = node;
+            } else {
+                node->previous->rsibling = node_moved;
+                node_moved->previous = node->previous;
+
+                node_moved->rsibling = node;
+                node->previous = node_moved;
+            }
+
             endInsertRows();
         }
     }

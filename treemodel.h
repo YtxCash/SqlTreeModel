@@ -107,7 +107,7 @@ public:
         int column, const QModelIndex& parent) override;
 
 public:
-    bool IsDescendantOf(Node* possibleDescendant, Node* possibleAncestor) const;
+    bool IsChild(Node* node_parent, Node* node) const;
 
 private:
     bool InsertRecord(int id_parent, QString name);
@@ -119,7 +119,7 @@ private:
 
     Node* GetNode(const QModelIndex& index) const;
     Node* GetChild(Node* parent, int row) const;
-    Node* GetChild(int id, Node* parent) const;
+    Node* GetDescendant(Node* parent, int id) const;
 
 private:
     Node* root;
