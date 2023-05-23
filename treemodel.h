@@ -100,13 +100,14 @@ public:
 
     Qt::ItemFlags flags(const QModelIndex& index) const override;
 
-#if 0 // 暂时不考虑拖动
+    Qt::DropActions supportedDropActions() const override;
     QStringList mimeTypes() const override;
     QMimeData* mimeData(const QModelIndexList& indexes) const override;
     bool dropMimeData(const QMimeData* data, Qt::DropAction action, int row,
         int column, const QModelIndex& parent) override;
-    bool IsDescendantOf(Node* possibleDescendant, Node* possibleAncestor);
-#endif
+
+public:
+    bool IsDescendantOf(Node* possibleDescendant, Node* possibleAncestor) const;
 
 private:
     bool InsertRecord(int id_parent, QString name);
@@ -117,7 +118,8 @@ private:
     void ConstructTree();
 
     Node* GetNode(const QModelIndex& index) const;
-    Node* GetNode(Node* parent, int row) const;
+    Node* GetChild(Node* parent, int row) const;
+    Node* GetChild(int id, Node* parent) const;
 
 private:
     Node* root;

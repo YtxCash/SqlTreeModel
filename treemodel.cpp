@@ -138,16 +138,13 @@ QModelIndex TreeModel::index(int row, int column, const QModelIndex& parent) con
     if (!hasIndex(row, column, parent))
         return QModelIndex();
 
-    auto* node_parent = root;
-    if (parent.isValid())
-        node_parent = GetNode(parent);
+    Node* node_parent = GetNode(parent);
+    auto* node = GetChild(node_parent, row);
 
-    auto* node = GetNode(node_parent, row);
+    if (node)
+        return createIndex(row, column, node);
 
-    if (node == nullptr)
-        return QModelIndex();
-
-    return createIndex(row, column, node);
+    return QModelIndex();
 }
 
 QModelIndex TreeModel::parent(const QModelIndex& index) const
@@ -155,7 +152,7 @@ QModelIndex TreeModel::parent(const QModelIndex& index) const
     if (!index.isValid())
         return QModelIndex();
 
-    auto* node = GetNode(index);
+    auto* node = static_cast<Node*>(index.internalPointer());
 
     while (!node->IsLChild()) {
         node = node->previous;
@@ -178,10 +175,7 @@ QModelIndex TreeModel::parent(const QModelIndex& index) const
 int TreeModel::rowCount(const QModelIndex& parent) const
 {
     int i = 0;
-    auto* node_parent = root;
-    if (parent.isValid())
-        node_parent = GetNode(parent);
-
+    auto* node_parent = GetNode(parent);
     auto* node_tmp = node_parent->lchild;
 
     while (node_tmp != nullptr) {
@@ -197,7 +191,7 @@ QVariant TreeModel::data(const QModelIndex& index, int role) const
     if (!index.isValid())
         return QVariant();
 
-    Node* node = GetNode(index);
+    auto* node = static_cast<Node*>(index.internalPointer());
 
     if (role == Qt::DisplayRole || role == Qt::EditRole) {
         switch (index.column()) {
@@ -223,7 +217,7 @@ bool TreeModel::setData(const QModelIndex& index, const QVariant& value, int rol
     if (!index.isValid() || role != Qt::EditRole)
         return false;
 
-    Node* node = GetNode(index);
+    auto* node = static_cast<Node*>(index.internalPointer());
 
     switch (index.column()) {
     case 0:
@@ -273,14 +267,13 @@ void TreeModel::sort(int column, Qt::SortOrder order)
 
 Node* TreeModel::GetNode(const QModelIndex& index) const
 {
-    Node* node = static_cast<Node*>(index.internalPointer());
-    if (node)
-        return node;
-    else
+    if (!index.isValid())
         return root;
+    else
+        return static_cast<Node*>(index.internalPointer());
 }
 
-Node* TreeModel::GetNode(Node* parent, int row) const
+Node* TreeModel::GetChild(Node* parent, int row) const
 {
     auto* node = parent->lchild;
     int i = 0;
@@ -289,6 +282,16 @@ Node* TreeModel::GetNode(Node* parent, int row) const
         node = node->rsibling;
         ++i;
     }
+
+    return node;
+}
+
+Node* TreeModel::GetChild(int id, Node* parent) const
+{
+    auto* node = parent->lchild;
+
+    while (id != node->id)
+        node = node->rsibling;
 
     return node;
 }
@@ -305,7 +308,7 @@ bool TreeModel::insertRows(int row, int count, const QModelIndex& parent)
     InsertRecord(node_parent->id, "New Node");
     auto* node_new = new Node(id, "New Node", "");
 
-    auto* node = GetNode(node_parent, row);
+    auto* node = GetChild(node_parent, row);
 
     beginInsertRows(parent, row, row);
     if (node == nullptr) {
@@ -371,7 +374,7 @@ bool TreeModel::removeRows(int row, int count, const QModelIndex& parent)
     if (parent.isValid())
         node_parent = GetNode(parent);
 
-    auto* node = GetNode(node_parent, row);
+    auto* node = GetChild(node_parent, row);
     int id = node->id;
 
     beginRemoveRows(parent, row, row);
@@ -460,42 +463,43 @@ bool TreeModel::SortRecord()
 
 QVariant TreeModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
-    if (role != Qt::DisplayRole)
-        return QVariant();
-
-    if (orientation == Qt::Horizontal)
+    if (orientation == Qt::Horizontal && role == Qt::DisplayRole)
         return QStringLiteral("Column %1").arg(section);
-    else
-        return QVariant();
+
+    return QVariant();
 }
 
 Qt::ItemFlags TreeModel::flags(const QModelIndex& index) const
 {
+    if (!index.isValid())
+        return Qt::NoItemFlags;
+
     auto default_flags = QAbstractItemModel::flags(index);
 
-    if (index.isValid()) {
-        if (index.column() == 0 || index.column() == 1)
-            return Qt::ItemIsDragEnabled | Qt::ItemIsDropEnabled | default_flags;
-        else
-            return Qt::ItemIsEditable | default_flags;
-    } else
-        return default_flags;
+    if (index.column() == 0 || index.column() == 1)
+        return Qt::ItemIsDragEnabled | Qt::ItemIsDropEnabled | default_flags;
+    else
+        return Qt::ItemIsEditable | default_flags;
 }
 
-#if 0 // 暂时用不上
+Qt::DropActions TreeModel::supportedDropActions() const
+{
+    return Qt::MoveAction | Qt::CopyAction;
+}
+
 QStringList TreeModel::mimeTypes() const
 {
     QStringList types;
-    types << "application/vnd.text.list";
+    types << "application/x-qabstractitemmodeldatalist";
     return types;
 }
 
 QMimeData* TreeModel::mimeData(const QModelIndexList& indexes) const
 {
-    QMimeData* mimeData = new QMimeData();
-    QByteArray encodedData;
+    QMimeData* data_mime = new QMimeData();
 
-    QDataStream stream(&encodedData, QIODevice::WriteOnly);
+    QByteArray data_encoded;
+    QDataStream stream(&data_encoded, QIODevice::WriteOnly);
 
     for (const QModelIndex& index : indexes) {
         if (index.isValid()) {
@@ -504,23 +508,23 @@ QMimeData* TreeModel::mimeData(const QModelIndexList& indexes) const
         }
     }
 
-    mimeData->setData("application/vnd.text.list", encodedData);
-    return mimeData;
+    data_mime->setData("application/x-qabstractitemmodeldatalist", data_encoded);
+    return data_mime;
 }
 
-bool TreeModel::IsDescendantOf(Node* possibleDescendant, Node* possibleAncestor)
+bool TreeModel::IsDescendantOf(Node* possibleDescendant, Node* possibleAncestor) const
 {
     if (!possibleDescendant || !possibleAncestor) {
         return false;
     }
 
-    Node* currentNode = possibleDescendant->previous;
-    while (currentNode) {
-        if (currentNode == possibleAncestor) {
-            return true;
-        }
-        currentNode = currentNode->previous;
-    }
+    //    Node* currentNode = possibleDescendant->previous;
+    //    while (currentNode) {
+    //        if (currentNode == possibleAncestor) {
+    //            return true;
+    //        }
+    //        currentNode = currentNode->previous;
+    //    }
     return false;
 }
 
@@ -530,14 +534,15 @@ bool TreeModel::dropMimeData(const QMimeData* data, Qt::DropAction action, int r
     if (action == Qt::IgnoreAction)
         return true;
 
-    if (!data->hasFormat("application/vnd.text.list"))
+    if (!data->hasFormat("application/x-qabstractitemmodeldatalist"))
         return false;
 
     if (column != 0)
         return false;
 
-    QByteArray encodedData = data->data("application/vnd.text.list");
-    QDataStream stream(&encodedData, QIODevice::ReadOnly);
+    QByteArray data_encoded = data->data("application/x-qabstractitemmodeldatalist");
+    QDataStream stream(&data_encoded, QIODevice::ReadOnly);
+
     QList<int> newItems;
     int newItem;
 
@@ -546,31 +551,33 @@ bool TreeModel::dropMimeData(const QMimeData* data, Qt::DropAction action, int r
         newItems << newItem;
     }
 
-    Node* node_parent = GetNode(parent);
-    int beginRow = row == -1 ? node_parent->children.count() : row;
+    auto* node_parent = root;
+    if (parent.isValid())
+        node_parent = GetNode(parent);
+
+    //    int beginRow = row == -1 ? node_parent->children.count() : row;
 
     Node* moved_node;
 
     for (int itemId : newItems) {
-        moved_node = FindNode(itemId, node_root);
+        moved_node = GetChild(itemId, node_parent);
         if (moved_node) {
             // 如果目标父节点与移动节点的当前父节点相同，跳过此节点
-            if (moved_node->parent == node_parent || IsDescendantOf(node_parent, moved_node)) {
-                continue;
-            }
-            QModelIndex movedIndex = createIndex(
-                moved_node->parent->children.indexOf(moved_node), 0, moved_node);
-            beginRemoveRows(movedIndex.parent(), movedIndex.row(), movedIndex.row());
-            moved_node->parent->children.removeOne(moved_node);
-            endRemoveRows();
+            //            if (moved_node->parent == node_parent || IsDescendantOf(node_parent, moved_node)) {
+            //                continue;
+            //            }
+            //            QModelIndex movedIndex = createIndex(
+            //                moved_node->parent->children.indexOf(moved_node), 0, moved_node);
+            //            beginRemoveRows(movedIndex.parent(), movedIndex.row(), movedIndex.row());
+            //            moved_node->parent->children.removeOne(moved_node);
+            //            endRemoveRows();
 
-            beginInsertRows(parent, beginRow, beginRow);
-            node_parent->children.insert(beginRow, moved_node);
-            moved_node->parent = node_parent;
+            //            beginInsertRows(parent, beginRow, beginRow);
+            //            node_parent->children.insert(beginRow, moved_node);
+            //            moved_node->parent = node_parent;
             endInsertRows();
         }
     }
 
     return true;
 }
-#endif
