@@ -377,7 +377,7 @@ bool TreeModel::DeleteRecord(const int id)
         "UPDATE %1 "
         "SET distance = distance -1 "
         "WHERE distance != 0 AND descendant IN "
-        "(SELECT descendant FROM %1 WHERE ancestor = :id and distance !=0)")
+        "(SELECT descendant FROM %1 WHERE ancestor = :id AND distance !=0)")
                       .arg(table_info.node_path));
     query.bindValue(":id", id);
     if (!query.exec()) {
@@ -405,9 +405,15 @@ bool TreeModel::DragRecord(int id, int new_parent)
     QSqlQuery query = QSqlQuery(db);
 
     query.prepare(QString("DELETE FROM %1 WHERE "
-                          "descendant IN (SELECT descendant FROM %1 WHERE ancestor = :id) ")
+                          "(descendant IN (select descendant FROM %1 WHERE ancestor = 13) AND "
+                          "ancestor IN (select ancestor FROM %1 WHERE descendant = 13 AND ancestor != descendant))")
                       .arg(table_info.node_path));
     query.bindValue(":id", id);
+    if (!query.exec()) {
+        qWarning() << "Failed to drag node_path 1st step"
+                   << query.lastError().text();
+        return false;
+    }
 
     query.prepare(QString("SELECT p.ancestor ancestor, s.descendant descendant, p.distance + s.distance + 1 distance "
                           "from %1 p cross join %1 s "
