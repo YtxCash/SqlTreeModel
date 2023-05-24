@@ -49,6 +49,9 @@ public:
     bool setData(const QModelIndex& index, const QVariant& value,
         int role = Qt::EditRole) override;
 
+    QVariant headerData(int section, Qt::Orientation orientation,
+        int role = Qt::DisplayRole) const override;
+
     void sort(int column, Qt::SortOrder order) override;
 
     bool insertRows(int row, int count,
@@ -58,14 +61,15 @@ public:
 
     Qt::ItemFlags flags(const QModelIndex& index) const override;
 
-    // 暂时不考虑拖动
-#if 1
+    Qt::DropActions supportedDropActions() const override;
     QStringList mimeTypes() const override;
     QMimeData* mimeData(const QModelIndexList& indexes) const override;
+    bool canDropMimeData(const QMimeData* data, Qt::DropAction action, int row, int column, const QModelIndex& parent) const override;
     bool dropMimeData(const QMimeData* data, Qt::DropAction action, int row,
         int column, const QModelIndex& parent) override;
-    bool IsDescendantOf(Node* possibleDescendant, Node* possibleAncestor);
-#endif
+
+public:
+    //    bool IsDescendant(Node* possibleDescendant, Node* possibleAncestor);
 
 private:
     bool InsertRecord(int id_parent, QString name);
@@ -84,4 +88,5 @@ private:
     QSqlDatabase db;
     TableInfo table_info;
     int id;
+    QStringList headers;
 };

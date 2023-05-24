@@ -14,7 +14,7 @@ MainWindow::MainWindow(QWidget* parent)
 
     ui->treeView->setModel(tree_model);
 
-    ui->treeView->setSelectionMode(QAbstractItemView::ExtendedSelection);
+    ui->treeView->setSelectionMode(QAbstractItemView::SingleSelection);
     ui->treeView->setDragEnabled(true);
     ui->treeView->setAcceptDrops(true);
     ui->treeView->setDropIndicatorShown(true);
@@ -22,8 +22,7 @@ MainWindow::MainWindow(QWidget* parent)
 
     //    ui->treeView->setColumnHidden(1, true);
     // 如果有需要，设置列宽
-    ui->treeView->setColumnWidth(0, 400);
-    ui->treeView->setColumnWidth(1, 300);
+    ui->treeView->setColumnWidth(0, 200);
 
     ui->treeView->setExpandsOnDoubleClick(true);
     ui->treeView->header()->setStretchLastSection(true);
