@@ -214,19 +214,11 @@ bool TreeModel::UpdateRecord(int id, QString column, QString string)
     return true;
 }
 
-void TreeModel::ResetSortedFlag(Node* node)
-{
-    node->sorted = false;
-    for (Node* child : node->children) {
-        ResetSortedFlag(child);
-    }
-}
-
 void TreeModel::sort(int column, Qt::SortOrder order)
 {
     emit layoutAboutToBeChanged();
 
-    std::function<bool(Node*, Node*)> compare =
+    std::function<bool(Node*, Node*)> Compare =
         [column, order](Node* lhs, Node* rhs) -> bool {
         bool result;
         switch (column) {
@@ -244,19 +236,16 @@ void TreeModel::sort(int column, Qt::SortOrder order)
         return order == Qt::AscendingOrder ? result : !result;
     };
 
-    std::function<void(Node*)> sort_children =
-        [&compare, &sort_children](Node* node) {
-            if (!node->sorted) {
-                std::sort(node->children.begin(), node->children.end(), compare);
-                node->sorted = true;
-            }
+    std::function<void(Node*)> SortChildren =
+        [&Compare, &SortChildren](Node* node) {
+            std::sort(node->children.begin(), node->children.end(), Compare);
+
             for (Node* child : node->children) {
-                sort_children(child);
+                SortChildren(child);
             }
         };
 
-    ResetSortedFlag(root);
-    sort_children(root);
+    SortChildren(root);
 
     emit layoutChanged();
 }

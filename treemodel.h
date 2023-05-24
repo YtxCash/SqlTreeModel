@@ -6,7 +6,6 @@ struct Node {
     int id { 0 };
     QString name { "" };
     QString description { "" };
-    bool sorted { false };
 
     Node* parent { nullptr };
     QList<Node*> children;
@@ -76,8 +75,6 @@ private:
     bool DragRecord(int id, int new_parent);
 
     void ConstructTree();
-
-    void ResetSortedFlag(Node* node);
 
     Node* GetNode(const QModelIndex& index) const;
     Node* FindNode(Node* parent, int id);
