@@ -40,21 +40,25 @@ MainWindow::~MainWindow()
 void MainWindow::on_btnDelete_clicked()
 {
     // 获取所选节点的索引
-    auto selected_index = ui->treeView->currentIndex();
+    auto index = ui->treeView->selectionModel()->selectedRows();
+    for (auto index : index) {
 
-    if (!selected_index.isValid())
-        return;
+        if (!index.isValid())
+            return;
 
-    tree_model->removeRows(ui->treeView->currentIndex().row(), 1, selected_index.parent());
+        tree_model->removeRows(ui->treeView->currentIndex().row(), 1, index.parent());
+    }
 }
 
 void MainWindow::on_btnInsert_clicked()
 {
-    auto selected_index = ui->treeView->currentIndex();
-    if (!selected_index.isValid())
-        return;
+    auto index = ui->treeView->selectionModel()->selectedRows();
+    for (auto index : index) {
+        if (!index.isValid())
+            return;
 
-    tree_model->insertRows(ui->treeView->currentIndex().row(), 1, selected_index.parent());
+        tree_model->insertRows(ui->treeView->currentIndex().row(), 1, index.parent());
+    }
 }
 
 void MainWindow::CurrentChanged(const QModelIndex& index)
@@ -69,9 +73,10 @@ void MainWindow::on_treeView_clicked(const QModelIndex& index)
 
 void MainWindow::on_btnAppend_clicked()
 {
-    auto selected_index = ui->treeView->currentIndex();
-    if (!selected_index.isValid())
-        selected_index = QModelIndex();
+    auto index = ui->treeView->currentIndex();
 
-    tree_model->insertRows(0, 1, selected_index);
+    if (!index.isValid())
+        index = QModelIndex();
+
+    tree_model->insertRows(0, 1, index);
 }
