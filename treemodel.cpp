@@ -405,8 +405,8 @@ bool TreeModel::DragRecord(int id, int new_parent)
     QSqlQuery query = QSqlQuery(db);
 
     query.prepare(QString("DELETE FROM %1 WHERE "
-                          "(descendant IN (select descendant FROM %1 WHERE ancestor = 13) AND "
-                          "ancestor IN (select ancestor FROM %1 WHERE descendant = 13 AND ancestor != descendant))")
+                          "(descendant IN (SELECT descendant FROM %1 WHERE ancestor = :id) AND "
+                          "ancestor IN (SELECT ancestor FROM %1 WHERE descendant = :id AND ancestor != descendant))")
                       .arg(table_info.node_path));
     query.bindValue(":id", id);
     if (!query.exec()) {
@@ -544,6 +544,8 @@ bool TreeModel::dropMimeData(const QMimeData* data, Qt::DropAction action, int r
             node->parent = node_parent;
             endInsertRows();
         }
+
+        DragRecord(id, node_parent->id);
     }
 
     return true;
