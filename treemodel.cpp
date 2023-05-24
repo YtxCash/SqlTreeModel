@@ -231,6 +231,10 @@ void TreeModel::sort(int column, Qt::SortOrder order)
         case 2:
             result = lhs->description < rhs->description;
             break;
+
+        default:
+            result = false;
+            break;
         }
 
         return order == Qt::AscendingOrder ? result : !result;
