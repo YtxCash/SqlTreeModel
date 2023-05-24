@@ -415,14 +415,22 @@ bool TreeModel::DragRecord(int id, int new_parent)
         return false;
     }
 
-    query.prepare(QString("SELECT p.ancestor ancestor, s.descendant descendant, p.distance + s.distance + 1 distance "
-                          "from %1 p cross join %1 s "
-                          "where p.descendant = :new_parent and s.ancestor = :id")
+    query.prepare(QString("INSERT INTO %1 (ancestor, descendant, distance) "
+                          "SELECT p.ancestor ancestor, s.descendant descendant, p.distance + s.distance + 1 distance "
+                          "FROM %1 p "
+                          "CROSS JOIN %1 s "
+                          "WHERE p.descendant = :new_parent AND s.ancestor = :id")
                       .arg(table_info.node_path));
     query.bindValue(":id", id);
     query.bindValue(":new_parent", new_parent);
 
-    return false;
+    if (!query.exec()) {
+        qWarning() << "Failed to drag node_path 2nd step"
+                   << query.lastError().text();
+        return false;
+    }
+
+    return true;
 }
 
 QVariant TreeModel::headerData(int section, Qt::Orientation orientation, int role) const
