@@ -218,44 +218,37 @@ void TreeModel::sort(int column, Qt::SortOrder order)
 {
     emit layoutAboutToBeChanged();
 
-    QModelIndexList model_indexes = persistentIndexList();
-    QList<QPersistentModelIndex> persistent_indexes;
-    for (const auto& model_index : model_indexes) {
-        // The persistent indexes are stored in a separate list so that we can
-        // change the persistent indexes in the model without changing the
-        // model indexes.
-        persistent_indexes.append(QPersistentModelIndex(model_index));
-    }
-
-    // The persistent indexes are sorted according to the order of the model
-    // indexes. This is necessary because the model indexes are sorted
-    // according to the order of the persistent indexes.
-    QList<QModelIndex> source_indexes;
-    for (const auto& persistent_index : persistent_indexes) {
-        source_indexes.append(persistent_index);
-    }
-
-    // The nodes are sorted according to the column and order. The nodes are
-    // sorted in-place.
     std::function<bool(Node*, Node*)> compare =
-        [this, column, order](Node* lhs, Node* rhs) -> bool {
-        bool result = (column == 0) ? (lhs->name < rhs->name)
-                                    : (lhs->id < rhs->id);
+        [column, order](Node* lhs, Node* rhs) -> bool {
+        bool result;
+        switch (column) {
+        case 0:
+            result = lhs->name < rhs->name;
+            break;
+        case 1:
+            result = lhs->id < rhs->id;
+            break;
+        case 2:
+            result = lhs->description < rhs->description;
+            break;
+        default:
+            result = false;
+            break;
+        }
+
         return order == Qt::AscendingOrder ? result : !result;
     };
-    std::function<void(Node*)> sort_children = [&compare,
-                                                   &sort_children](Node* node) {
-        std::sort(node->children.begin(), node->children.end(), compare);
-        for (Node* child : node->children) {
-            sort_children(child);
-        }
-    };
-    sort_children(root);
 
-    // The model indexes are changed to match the sorted persistent indexes.
-    for (int i = 0; i < source_indexes.size(); ++i) {
-        changePersistentIndex(source_indexes.at(i), persistent_indexes.at(i));
-    }
+    std::function<void(Node*)> sort_children =
+        [&compare, &sort_children](Node* node) {
+            std::sort(node->children.begin(), node->children.end(), compare);
+
+            for (Node* child : node->children) {
+                sort_children(child);
+            }
+        };
+
+    sort_children(root);
 
     emit layoutChanged();
 }
@@ -274,7 +267,7 @@ Node* TreeModel::GetNode(const QModelIndex& index) const
 Node* TreeModel::FindNode(Node* parent, int id)
 {
     if (!parent)
-        parent = root;
+        return nullptr;
 
     for (Node* child : parent->children) {
         if (child->id == id)
@@ -426,6 +419,8 @@ bool TreeModel::DragRecord(int id, int new_parent)
                       .arg(table_info.node_path));
     query.bindValue(":id", id);
     query.bindValue(":new_parent", new_parent);
+
+    return false;
 }
 
 QVariant TreeModel::headerData(int section, Qt::Orientation orientation, int role) const
