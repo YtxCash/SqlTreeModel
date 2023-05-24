@@ -411,6 +411,23 @@ bool TreeModel::SortRecord()
     return true;
 }
 
+bool TreeModel::DragRecord(int id, int new_parent)
+{
+    QSqlQuery query = QSqlQuery(db);
+
+    query.prepare(QString("DELETE FROM %1 WHERE "
+                          "descendant IN (SELECT descendant FROM %1 WHERE ancestor = :id) ")
+                      .arg(table_info.node_path));
+    query.bindValue(":id", id);
+
+    query.prepare(QString("SELECT p.ancestor ancestor, s.descendant descendant, p.distance + s.distance + 1 distance "
+                          "from %1 p cross join %1 s "
+                          "where p.descendant = :new_parent and s.ancestor = :id")
+                      .arg(table_info.node_path));
+    query.bindValue(":id", id);
+    query.bindValue(":new_parent", new_parent);
+}
+
 QVariant TreeModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
     if (orientation == Qt::Horizontal && role == Qt::DisplayRole)
@@ -481,22 +498,6 @@ bool TreeModel::canDropMimeData(const QMimeData* data, Qt::DropAction action, in
     return true;
 }
 
-// bool TreeModel::IsDescendant(Node* descendant, Node* ancestor)
-//{
-//     if (!descendant || !ancestor) {
-//         return false;
-//     }
-
-//    Node* node = descendant->parent;
-//    while (node) {
-//        if (node == ancestor) {
-//            return true;
-//        }
-//        node = node->parent;
-//    }
-//    return false;
-//}
-
 bool TreeModel::dropMimeData(const QMimeData* data, Qt::DropAction action, int row,
     int column, const QModelIndex& parent)
 {
@@ -514,7 +515,7 @@ bool TreeModel::dropMimeData(const QMimeData* data, Qt::DropAction action, int r
     }
 
     Node* node_parent = GetNode(parent);
-    int beginRow = row == -1 ? node_parent->children.count() : row;
+    int beginRow = row == -1 ? node_parent->children.size() : row;
 
     Node* node;
 

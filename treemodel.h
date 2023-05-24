@@ -68,14 +68,12 @@ public:
     bool dropMimeData(const QMimeData* data, Qt::DropAction action, int row,
         int column, const QModelIndex& parent) override;
 
-public:
-    //    bool IsDescendant(Node* possibleDescendant, Node* possibleAncestor);
-
 private:
     bool InsertRecord(int id_parent, QString name);
     bool UpdateRecord(int id, QString column, QString string);
     bool DeleteRecord(int id);
     bool SortRecord();
+    bool DragRecord(int id, int new_parent);
 
     void ConstructTree();
 
