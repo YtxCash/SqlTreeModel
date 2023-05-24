@@ -6,6 +6,7 @@ struct Node {
     int id { 0 };
     QString name { "" };
     QString description { "" };
+    bool sorted { false };
 
     Node* parent { nullptr };
     QList<Node*> children;
@@ -72,10 +73,11 @@ private:
     bool InsertRecord(int id_parent, QString name);
     bool UpdateRecord(int id, QString column, QString string);
     bool DeleteRecord(int id);
-    bool SortRecord();
     bool DragRecord(int id, int new_parent);
 
     void ConstructTree();
+
+    void ResetSortedFlag(Node* node);
 
     Node* GetNode(const QModelIndex& index) const;
     Node* FindNode(Node* parent, int id);
@@ -87,4 +89,5 @@ private:
     TableInfo table_info;
     int id;
     QStringList headers;
+    QHash<Node*, bool> states;
 };
