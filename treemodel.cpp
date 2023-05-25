@@ -319,11 +319,11 @@ bool TreeModel::InsertRecord(int id_parent, QString name)
 
     query.prepare(QString(
         "INSERT INTO %1 (ancestor, descendant, distance) "
-        "SELECT ancestor, :descendant, distance + 1 "
-        "FROM node_path WHERE descendant = :parent "
-        "UNION ALL SELECT :descendant, :descendant, 0")
+        "SELECT ancestor, :id, distance + 1 "
+        "FROM %1 WHERE descendant = :parent "
+        "UNION ALL SELECT :id, :id, 0")
                       .arg(table_info.node_path));
-    query.bindValue(":descendant", id);
+    query.bindValue(":id", id);
     query.bindValue(":parent", id_parent);
 
     if (!query.exec()) {
@@ -348,12 +348,13 @@ bool TreeModel::removeRows(int row, int count, const QModelIndex& parent)
     if (!node_parent->children.isEmpty()) {
         for (Node* child : node->children) {
             child->parent = node_parent;
-            node_parent->children.append(child);
+            node_parent->children.emplace_back(child);
         }
     }
 
     node_parent->children.removeOne(node);
     delete node;
+    node = nullptr;
 
     endRemoveRows();
 
