@@ -265,7 +265,7 @@ Node* TreeModel::GetNode(const QModelIndex& index) const
     return root;
 }
 
-Node* TreeModel::FindNode(Node* parent, int id)
+Node* TreeModel::GetNode(Node* parent, int id)
 {
     if (!parent)
         return nullptr;
@@ -274,7 +274,7 @@ Node* TreeModel::FindNode(Node* parent, int id)
         if (child->id == id)
             return child;
 
-        Node* node = FindNode(child, id);
+        Node* node = GetNode(child, id);
         if (node)
             return node;
     }
@@ -550,7 +550,7 @@ bool TreeModel::dropMimeData(const QMimeData* data, Qt::DropAction action, int r
     Node* node;
 
     for (int id : ids) {
-        node = FindNode(root, id);
+        node = GetNode(root, id);
         if (node) {
             if (node->parent == node_parent || IsDescendant(node_parent, node)) {
                 continue;
