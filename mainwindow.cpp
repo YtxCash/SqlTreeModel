@@ -36,10 +36,8 @@ MainWindow::~MainWindow()
 
 void MainWindow::on_btnDelete_clicked()
 {
-    // 获取所选节点的索引
     auto index = ui->treeView->selectionModel()->selectedRows();
     for (auto index : index) {
-
         if (!index.isValid())
             return;
 
@@ -49,12 +47,13 @@ void MainWindow::on_btnDelete_clicked()
 
 void MainWindow::on_btnInsert_clicked()
 {
-    auto index = ui->treeView->selectionModel()->selectedRows();
-    for (auto index : index) {
+    auto indexes = ui->treeView->selectionModel()->selectedRows();
+    for (auto index : indexes) {
         if (!index.isValid())
             return;
 
         tree_model->insertRows(ui->treeView->currentIndex().row(), 1, index.parent());
+        ui->treeView->setCurrentIndex(index);
     }
 }
 
@@ -70,10 +69,14 @@ void MainWindow::on_treeView_clicked(const QModelIndex& index)
 
 void MainWindow::on_btnAppend_clicked()
 {
-    auto index = ui->treeView->currentIndex();
+    auto indexes = ui->treeView->selectionModel()->selectedRows();
 
-    if (!index.isValid())
-        index = QModelIndex();
+    if (indexes.isEmpty())
+        indexes << QModelIndex();
 
-    tree_model->insertRows(0, 1, index);
+    for (auto index : indexes) {
+        tree_model->insertRows(0, 1, index);
+        auto index_child = tree_model->index(0, 0, index);
+        ui->treeView->setCurrentIndex(index_child);
+    }
 }
