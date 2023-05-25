@@ -64,7 +64,7 @@ void MainWindow::CurrentChanged(const QModelIndex& index)
 
 void MainWindow::on_treeView_clicked(const QModelIndex& index)
 {
-    qDebug() << index.data().toString() << "click";
+    qDebug() << index.data().toString() << "selected changed";
 }
 
 void MainWindow::on_btnAppend_clicked()
@@ -76,6 +76,7 @@ void MainWindow::on_btnAppend_clicked()
 
     for (auto index : indexes) {
         tree_model->insertRows(0, 1, index);
+
         auto index_child = tree_model->index(0, 0, index);
         ui->treeView->setCurrentIndex(index_child);
     }

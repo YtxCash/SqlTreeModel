@@ -71,7 +71,7 @@ public:
 private:
     bool InsertRecord(int id_parent, QString name);
     bool UpdateRecord(int id, QString column, QString string);
-    bool DeleteRecord(int id);
+    bool DeleteRecord(int id, int id_parent);
     bool DragRecord(int id, int new_parent);
 
     void ConstructTree();

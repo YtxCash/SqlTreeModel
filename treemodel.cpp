@@ -357,12 +357,12 @@ bool TreeModel::removeRows(int row, int count, const QModelIndex& parent)
 
     endRemoveRows();
 
-    DeleteRecord(id);
+    DeleteRecord(id, node_parent->id);
 
     return true;
 }
 
-bool TreeModel::DeleteRecord(const int id)
+bool TreeModel::DeleteRecord(int id, int id_parent)
 {
     QSqlQuery query = QSqlQuery(db);
 
@@ -374,10 +374,9 @@ bool TreeModel::DeleteRecord(const int id)
     }
 
     query.prepare(QString(
-        "UPDATE %1 "
-        "SET distance = distance -1 "
-        "WHERE distance != 0 AND descendant IN "
-        "(SELECT descendant FROM %1 WHERE ancestor = :id AND distance !=0)")
+        "UPDATE %1 SET distance = distance -1 WHERE "
+        "(descendant IN (SELECT descendant FROM %1 WHERE ancestor = :id AND ancestor != descendant) "
+        "AND ancestor IN (SELECT ancestor FROM %1 WHERE descendant = :id AND ancestor != descendant))")
                       .arg(table_info.node_path));
     query.bindValue(":id", id);
     if (!query.exec()) {
