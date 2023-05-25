@@ -416,7 +416,7 @@ bool TreeModel::DragRecord(int id, int new_parent)
     }
 
     query.prepare(QString("INSERT INTO %1 (ancestor, descendant, distance) "
-                          "SELECT p.ancestor ancestor, s.descendant descendant, p.distance + s.distance + 1 distance "
+                          "SELECT p.ancestor, s.descendant, p.distance + s.distance + 1 "
                           "FROM %1 p "
                           "CROSS JOIN %1 s "
                           "WHERE p.descendant = :new_parent AND s.ancestor = :id")
