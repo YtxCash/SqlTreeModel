@@ -448,15 +448,22 @@ Qt::ItemFlags TreeModel::flags(const QModelIndex& index) const
 
     auto default_flags = QAbstractItemModel::flags(index);
 
-    if (index.column() == 0 || index.column() == 1)
+    switch (index.column()) {
+    case 0:
         return Qt::ItemIsDragEnabled | Qt::ItemIsDropEnabled | default_flags;
-    else
+        break;
+    case 1:
+        return default_flags;
+        break;
+    default:
         return Qt::ItemIsEditable | default_flags;
+        break;
+    }
 }
 
 Qt::DropActions TreeModel::supportedDropActions() const
 {
-    return Qt::MoveAction | Qt::CopyAction;
+    return Qt::MoveAction;
 }
 
 QStringList TreeModel::mimeTypes() const
@@ -520,14 +527,13 @@ bool TreeModel::dropMimeData(const QMimeData* data, Qt::DropAction action, int r
     }
 
     Node* node_parent = GetNode(parent);
-    int beginRow = row == -1 ? node_parent->children.size() : row;
+    int begin_row = row == -1 ? node_parent->children.size() : row;
 
     Node* node;
 
     for (int id : ids) {
         node = FindNode(root, id);
         if (node) {
-            // 如果目标父节点与移动节点的当前父节点相同，跳过此节点
             if (node->parent == node_parent) {
                 continue;
             }
@@ -539,8 +545,8 @@ bool TreeModel::dropMimeData(const QMimeData* data, Qt::DropAction action, int r
             node->parent->children.removeOne(node);
             endRemoveRows();
 
-            beginInsertRows(parent, beginRow, beginRow);
-            node_parent->children.insert(beginRow, node);
+            beginInsertRows(parent, begin_row, begin_row);
+            node_parent->children.insert(begin_row, node);
             node->parent = node_parent;
             endInsertRows();
         }

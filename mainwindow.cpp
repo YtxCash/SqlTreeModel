@@ -13,15 +13,12 @@ MainWindow::MainWindow(QWidget* parent)
     tree_model = new TreeModel(*table_info, this);
 
     ui->treeView->setModel(tree_model);
-
     ui->treeView->setSelectionMode(QAbstractItemView::SingleSelection);
     ui->treeView->setDragEnabled(true);
     ui->treeView->setAcceptDrops(true);
     ui->treeView->setDropIndicatorShown(true);
     ui->treeView->setSortingEnabled(true);
-
     //    ui->treeView->setColumnHidden(1, true);
-    // 如果有需要，设置列宽
     ui->treeView->setColumnWidth(0, 200);
 
     ui->treeView->setExpandsOnDoubleClick(true);
