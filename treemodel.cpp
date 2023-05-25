@@ -25,7 +25,7 @@ TreeModel::TreeModel(const TableInfo& table, QObject* parent)
             << "Id"
             << "Description";
 
-    ConstructTree();
+    ConstructTree(db);
 }
 
 TreeModel::~TreeModel()
@@ -34,7 +34,7 @@ TreeModel::~TreeModel()
     db.close();
 }
 
-void TreeModel::ConstructTree()
+void TreeModel::ConstructTree(const QSqlDatabase& db)
 {
 
     auto query = QSqlQuery(db);
@@ -102,6 +102,42 @@ void TreeModel::ConstructTree()
             node->parent = root;
             root->children.emplace_back(node);
         }
+    }
+
+    ConstructLeafPaths(db, '/');
+}
+
+void TreeModel::ConstructLeafPaths(const QSqlDatabase& db, QChar c)
+{
+    leaf_paths.clear();
+
+    auto query = QSqlQuery(db);
+    query.prepare(QString("SELECT n1.id FROM %1 n1 "
+                          "INNER JOIN %2 n2 ON n1.id = n2.ancestor "
+                          "GROUP BY n1.id, n1.name "
+                          "HAVING COUNT(n2.ancestor) = 1;")
+                      .arg(table_info.node, table_info.node_path));
+    if (!query.exec()) {
+        qWarning() << "Error query data from node path"
+                   << query.lastError().text();
+    }
+
+    Node* node;
+    while (query.next()) {
+
+        node = GetNode(root, query.value(0).toInt());
+        QString path = node->name;
+
+        while (node->parent != root) {
+            node = node->parent;
+            path = node->name + c + path;
+        }
+
+        leaf_paths.emplace_back(path);
+    }
+
+    for (const auto& str : leaf_paths) {
+        qDebug() << str;
     }
 }
 
@@ -317,6 +353,8 @@ bool TreeModel::insertRows(int row, int count, const QModelIndex& parent)
 
     endInsertRows();
 
+    ConstructLeafPaths(db, '/');
+
     return true;
 }
 
@@ -377,6 +415,7 @@ bool TreeModel::removeRows(int row, int count, const QModelIndex& parent)
     endRemoveRows();
 
     DeleteRecord(id, node_parent->id);
+    ConstructLeafPaths(db, '/');
 
     return true;
 }

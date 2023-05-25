@@ -58,12 +58,12 @@ void MainWindow::on_btnInsert_clicked()
 
 void MainWindow::CurrentChanged(const QModelIndex& index)
 {
-    qDebug() << index.data().toString() << "current changed";
+    //    qDebug() << index.data().toString() << "current changed";
 }
 
 void MainWindow::on_treeView_clicked(const QModelIndex& index)
 {
-    qDebug() << index.data().toString() << "selected changed";
+    //    qDebug() << index.data().toString() << "selected changed";
 }
 
 void MainWindow::on_btnAppend_clicked()

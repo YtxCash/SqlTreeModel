@@ -74,7 +74,8 @@ private:
     bool DeleteRecord(int id, int id_parent);
     bool DragRecord(int id, int new_parent);
 
-    void ConstructTree();
+    void ConstructTree(const QSqlDatabase& db);
+    void ConstructLeafPaths(const QSqlDatabase& db, QChar c);
 
     Node* GetNode(const QModelIndex& index) const;
     Node* GetNode(Node* parent, int id);
@@ -85,6 +86,9 @@ private:
 
     QSqlDatabase db;
     TableInfo table_info;
+
     int id;
     QStringList headers;
+
+    QStringList leaf_paths;
 };
