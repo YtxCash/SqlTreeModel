@@ -545,7 +545,7 @@ bool TreeModel::dropMimeData(const QMimeData* data, Qt::DropAction action, int r
     }
 
     Node* node_parent = GetNode(parent);
-    int begin_row = row == -1 ? 0 : row;
+    int begin_row = row == -1 ? node_parent->children.size() : row;
 
     Node* node;
 
