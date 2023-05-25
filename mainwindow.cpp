@@ -20,7 +20,6 @@ MainWindow::MainWindow(QWidget* parent)
     ui->treeView->setSortingEnabled(true);
     //    ui->treeView->setColumnHidden(1, true);
     ui->treeView->setColumnWidth(0, 200);
-
     ui->treeView->setExpandsOnDoubleClick(true);
     ui->treeView->header()->setStretchLastSection(true);
 

@@ -282,6 +282,24 @@ Node* TreeModel::FindNode(Node* parent, int id)
     return nullptr;
 }
 
+bool TreeModel::IsDescendant(Node* descendant, Node* ancestor)
+{
+    if (!descendant || !ancestor) {
+        return false;
+    }
+
+    Node* node = descendant->parent;
+
+    while (node) {
+        if (node == ancestor) {
+            return true;
+        }
+        node = node->parent;
+    }
+
+    return false;
+}
+
 bool TreeModel::insertRows(int row, int count, const QModelIndex& parent)
 {
     if (count != 1)
@@ -463,7 +481,7 @@ Qt::ItemFlags TreeModel::flags(const QModelIndex& index) const
 
 Qt::DropActions TreeModel::supportedDropActions() const
 {
-    return Qt::MoveAction;
+    return Qt::CopyAction | Qt::MoveAction;
 }
 
 QStringList TreeModel::mimeTypes() const
@@ -534,7 +552,7 @@ bool TreeModel::dropMimeData(const QMimeData* data, Qt::DropAction action, int r
     for (int id : ids) {
         node = FindNode(root, id);
         if (node) {
-            if (node->parent == node_parent) {
+            if (node->parent == node_parent || IsDescendant(node_parent, node)) {
                 continue;
             }
 

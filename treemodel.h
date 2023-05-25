@@ -78,6 +78,7 @@ private:
 
     Node* GetNode(const QModelIndex& index) const;
     Node* FindNode(Node* parent, int id);
+    bool IsDescendant(Node* descendant, Node* ancestor);
 
 private:
     Node* root;
