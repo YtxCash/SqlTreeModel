@@ -125,7 +125,9 @@ void TreeModel::ConstructLeafPaths(const QSqlDatabase& db, QChar c)
     Node* node;
     while (query.next()) {
 
-        node = GetNode(root, query.value(0).toInt());
+        int id = query.value(0).toInt();
+        node = GetNode(root, id);
+
         QString path = node->name;
 
         while (node->parent != root) {
@@ -133,11 +135,7 @@ void TreeModel::ConstructLeafPaths(const QSqlDatabase& db, QChar c)
             path = node->name + c + path;
         }
 
-        leaf_paths.emplace_back(path);
-    }
-
-    for (const auto& str : leaf_paths) {
-        qDebug() << str;
+        leaf_paths[id] = path;
     }
 }
 

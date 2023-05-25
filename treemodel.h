@@ -90,5 +90,5 @@ private:
     int id;
     QStringList headers;
 
-    QStringList leaf_paths;
+    QHash<int, QString> leaf_paths;
 };
