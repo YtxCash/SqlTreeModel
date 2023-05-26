@@ -1,19 +1,29 @@
 #ifndef TABLEMODEL_H
 #define TABLEMODEL_H
 
-#include "tableinfo.h"
 #include <QAbstractTableModel>
 #include <QSqlDatabase>
 
-struct Entry {
+struct Transaction {
     int id { 0 };
     QString name { "" };
     QString description { "" };
 
-    Entry(int id, QString name, QString description)
-        : id(id)
-        , name(name)
-        , description(description)
+    Transaction(int id, QString name, QString description)
+        : id { id }
+        , name { name }
+        , description { description }
+    {
+    }
+};
+
+struct TableInfo {
+    QString database { "" };
+    QString transaction { "" };
+
+    TableInfo(QString database, QString transaction)
+        : database { database }
+        , transaction { transaction }
     {
     }
 };
@@ -24,8 +34,29 @@ public:
     explicit TableModel(const TableInfo& table_info, QObject* parent = nullptr);
     ~TableModel();
 
+public:
+    int rowCount(const QModelIndex& parent = QModelIndex()) const override;
+    int columnCount(const QModelIndex& parent = QModelIndex()) const override;
+
+    QVariant data(const QModelIndex& index,
+        int role = Qt::DisplayRole) const override;
+    bool setData(const QModelIndex& index, const QVariant& value,
+        int role = Qt::EditRole) override;
+
+    QVariant headerData(int section, Qt::Orientation orientation,
+        int role = Qt::DisplayRole) const override;
+
+    void sort(int column, Qt::SortOrder order) override;
+
+    bool insertRows(int row, int count,
+        const QModelIndex& parent = QModelIndex()) override;
+    bool removeRows(int row, int count,
+        const QModelIndex& parent = QModelIndex()) override;
+
+    Qt::ItemFlags flags(const QModelIndex& index) const override;
+
 private:
-    QList<Entry> entries;
+    QList<Transaction> transactions;
     QSqlDatabase db;
     TableInfo table_info;
 

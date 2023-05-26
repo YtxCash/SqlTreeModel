@@ -1,4 +1,6 @@
-﻿#include "tableinfo.h"
+﻿#ifndef TREEMODEL_H
+#define TREEMODEL_H
+
 #include <QAbstractItemModel>
 #include <QSqlDatabase>
 
@@ -11,9 +13,22 @@ struct Node {
     QList<Node*> children;
 
     Node(int id, QString name, QString description)
-        : id(id)
-        , name(name)
-        , description(description)
+        : id { id }
+        , name { name }
+        , description { description }
+    {
+    }
+};
+
+struct TableInfo {
+    QString database { "" };
+    QString node { "" };
+    QString node_path { "" };
+
+    TableInfo(QString database, QString node, QString node_path)
+        : database { database }
+        , node { node }
+        , node_path { node_path }
     {
     }
 };
@@ -81,3 +96,5 @@ private:
     int id;
     QStringList headers;
 };
+
+#endif // TREEMODEL_H
