@@ -1,7 +1,9 @@
 ﻿#include "treemodel.h"
 #include <QDebug>
 #include <QIODevice>
+#include <QMimeData>
 #include <QSqlError>
+#include <QSqlQuery>
 
 TreeModel::TreeModel(const TableInfo& table, QObject* parent)
     : QAbstractItemModel(parent)

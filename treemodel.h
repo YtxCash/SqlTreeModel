@@ -1,6 +1,5 @@
 ﻿#include <QAbstractItemModel>
-#include <QMimeData>
-#include <QSqlQuery>
+#include <QSqlDatabase>
 
 struct Node {
     int id { 0 };
@@ -32,9 +31,13 @@ struct TableInfo {
 };
 
 class TreeModel : public QAbstractItemModel {
+
 public:
-    TreeModel(const TableInfo& table_info, QObject* parent = nullptr);
+    explicit TreeModel(const TableInfo& table_info, QObject* parent = nullptr);
     ~TreeModel();
+
+public:
+    QHash<int, QString> leaf_paths;
 
 public:
     QModelIndex index(int row, int column,
@@ -89,6 +92,4 @@ private:
 
     int id;
     QStringList headers;
-
-    QHash<int, QString> leaf_paths;
 };
