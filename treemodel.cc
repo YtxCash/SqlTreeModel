@@ -6,9 +6,9 @@
 #include <QSqlQuery>
 
 TreeModel::TreeModel(const TableInfo& table, QObject* parent)
-    : QAbstractItemModel(parent)
-    , root(nullptr)
-    , table_info(table)
+    : QAbstractItemModel { parent }
+    , root { nullptr }
+    , table_info { table }
 {
     db = QSqlDatabase::addDatabase("QSQLITE");
     db.setDatabaseName(table_info.database);

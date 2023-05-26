@@ -1,4 +1,5 @@
-﻿#include <QAbstractItemModel>
+﻿#include "tableinfo.h"
+#include <QAbstractItemModel>
 #include <QSqlDatabase>
 
 struct Node {
@@ -13,19 +14,6 @@ struct Node {
         : id(id)
         , name(name)
         , description(description)
-    {
-    }
-};
-
-struct TableInfo {
-    QString database { "" };
-    QString node { "" };
-    QString node_path { "" };
-
-    TableInfo(QString database, QString node, QString node_path)
-        : database(database)
-        , node(node)
-        , node_path(node_path)
     {
     }
 };
