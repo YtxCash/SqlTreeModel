@@ -5,10 +5,10 @@
 #include <QSqlError>
 #include <QSqlQuery>
 
-TreeModel::TreeModel(const TreeInfo& table, QObject* parent)
+TreeModel::TreeModel(const TreeInfo& tree_info, QObject* parent)
     : QAbstractItemModel { parent }
     , root { nullptr }
-    , tree_info { table }
+    , tree_info { tree_info }
 {
     db = QSqlDatabase::addDatabase("QSQLITE");
     db.setDatabaseName(tree_info.database);

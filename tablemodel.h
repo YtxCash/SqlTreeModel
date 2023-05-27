@@ -6,12 +6,12 @@
 
 struct Transaction {
     int id { 0 };
-    QString name { "" };
+    QString note { "" };
     QString description { "" };
 
-    Transaction(int id, QString name, QString description)
+    Transaction(int id, QString note, QString description)
         : id { id }
-        , name { name }
+        , note { note }
         , description { description }
     {
     }
