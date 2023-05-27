@@ -21,13 +21,11 @@ struct Node {
 };
 
 struct TreeInfo {
-    QString database { "" };
     QString node { "" };
     QString node_path { "" };
 
-    TreeInfo(QString database, QString node, QString node_path)
-        : database { database }
-        , node { node }
+    TreeInfo(QString node, QString node_path)
+        : node { node }
         , node_path { node_path }
     {
     }
@@ -36,7 +34,7 @@ struct TreeInfo {
 class TreeModel : public QAbstractItemModel {
 
 public:
-    explicit TreeModel(const TreeInfo& tree_info, QObject* parent = nullptr);
+    explicit TreeModel(const QSqlDatabase& db, const TreeInfo& tree_info, QObject* parent = nullptr);
     ~TreeModel();
 
 public:

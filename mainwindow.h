@@ -33,12 +33,12 @@ private slots:
 private:
     Ui::MainWindow* ui;
 
-    TreeModel* tree_model;
-    TreeInfo* tree_info;
+    TreeModel* financial_tree_model;
+    TreeInfo* financial_tree_info;
 
-    TableInfo* table_info;
-    TableModel* table_model;
+    TableInfo* financial_table_info;
+    TableModel* financial_table_model;
 
-    //    QSqlDatabase db;
+    QSqlDatabase db;
 };
 #endif // MAINWINDOW_H

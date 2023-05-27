@@ -5,24 +5,12 @@
 #include <QSqlError>
 #include <QSqlQuery>
 
-TreeModel::TreeModel(const TreeInfo& tree_info, QObject* parent)
+TreeModel::TreeModel(const QSqlDatabase& db, const TreeInfo& tree_info, QObject* parent)
     : QAbstractItemModel { parent }
     , root { nullptr }
     , tree_info { tree_info }
+    , db { db }
 {
-    db = QSqlDatabase::addDatabase("QSQLITE");
-    db.setDatabaseName(tree_info.database);
-
-    if (!db.open()) {
-        qWarning() << "Failed to open database:" << db.lastError().text();
-        return;
-    }
-
-    if (!db.isOpen()) {
-        qWarning() << "Database is not open";
-        return;
-    }
-
     headers << "Account"
             << "Id"
             << "Description";
@@ -33,7 +21,6 @@ TreeModel::TreeModel(const TreeInfo& tree_info, QObject* parent)
 TreeModel::~TreeModel()
 {
     delete root;
-    db.close();
 }
 
 void TreeModel::ConstructTree(const QSqlDatabase& db)

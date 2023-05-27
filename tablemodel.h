@@ -18,12 +18,10 @@ struct Transaction {
 };
 
 struct TableInfo {
-    QString database { "" };
     QString transaction { "" };
 
-    TableInfo(QString database, QString transaction)
-        : database { database }
-        , transaction { transaction }
+    TableInfo(QString transaction)
+        : transaction { transaction }
     {
     }
 };
@@ -31,7 +29,7 @@ struct TableInfo {
 class TableModel : public QAbstractTableModel {
 
 public:
-    explicit TableModel(const TableInfo& table_info, QObject* parent = nullptr);
+    explicit TableModel(const QSqlDatabase& db, const TableInfo& table_info, QObject* parent = nullptr);
     ~TableModel();
 
 public:
