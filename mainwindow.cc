@@ -8,7 +8,7 @@ MainWindow::MainWindow(QWidget* parent)
 {
     ui->setupUi(this);
 
-    table_info = new TableInfo("test.db", "node", "node_path");
+    table_info = new TreeInfo("test.db", "node", "node_path");
 
     tree_model = new TreeModel(*table_info, this);
 

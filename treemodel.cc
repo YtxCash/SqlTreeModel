@@ -5,13 +5,13 @@
 #include <QSqlError>
 #include <QSqlQuery>
 
-TreeModel::TreeModel(const TableInfo& table, QObject* parent)
+TreeModel::TreeModel(const TreeInfo& table, QObject* parent)
     : QAbstractItemModel { parent }
     , root { nullptr }
-    , table_info { table }
+    , tree_info { table }
 {
     db = QSqlDatabase::addDatabase("QSQLITE");
-    db.setDatabaseName(table_info.database);
+    db.setDatabaseName(tree_info.database);
 
     if (!db.open()) {
         qWarning() << "Failed to open database:" << db.lastError().text();
@@ -41,7 +41,7 @@ void TreeModel::ConstructTree(const QSqlDatabase& db)
 
     auto query = QSqlQuery(db);
 
-    query.prepare(QString("SELECT id, name, description FROM %1").arg(table_info.node));
+    query.prepare(QString("SELECT id, name, description FROM %1").arg(tree_info.node));
 
     if (!query.exec()) {
         qWarning() << "Error query data from node"
@@ -69,7 +69,7 @@ void TreeModel::ConstructTree(const QSqlDatabase& db)
         qWarning() << "TABLE NODE is not active";
     }
 
-    query.prepare(QString("SELECT ancestor, descendant FROM %1 WHERE distance = 1").arg(table_info.node_path));
+    query.prepare(QString("SELECT ancestor, descendant FROM %1 WHERE distance = 1").arg(tree_info.node_path));
     if (!query.exec()) {
         qWarning() << "Error query data from node path"
                    << query.lastError().text();
@@ -118,7 +118,7 @@ void TreeModel::ConstructLeafPaths(const QSqlDatabase& db, QChar c)
                           "INNER JOIN %2 n2 ON n1.id = n2.ancestor "
                           "GROUP BY n1.id, n1.name "
                           "HAVING COUNT(n2.ancestor) = 1;")
-                      .arg(table_info.node, table_info.node_path));
+                      .arg(tree_info.node, tree_info.node_path));
     if (!query.exec()) {
         qWarning() << "Error query data from node path"
                    << query.lastError().text();
@@ -239,7 +239,7 @@ bool TreeModel::UpdateRecord(int id, QString column, QString string)
 {
 
     QSqlQuery query = QSqlQuery(db);
-    query.prepare(QString("UPDATE %1 SET %2 = :string WHERE id = :id").arg(table_info.node, column));
+    query.prepare(QString("UPDATE %1 SET %2 = :string WHERE id = :id").arg(tree_info.node, column));
     query.bindValue(":id", id);
     query.bindValue(":string", string);
 
@@ -363,7 +363,7 @@ bool TreeModel::InsertRecord(int id_parent, QString name)
 
     QSqlQuery query = QSqlQuery(db);
 
-    query.prepare(QString("INSERT INTO %1 (name) VALUES (:name)").arg(table_info.node));
+    query.prepare(QString("INSERT INTO %1 (name) VALUES (:name)").arg(tree_info.node));
     query.bindValue(":name", name);
 
     if (!query.exec()) {
@@ -378,7 +378,7 @@ bool TreeModel::InsertRecord(int id_parent, QString name)
         "SELECT ancestor, :id, distance + 1 "
         "FROM %1 WHERE descendant = :parent "
         "UNION ALL SELECT :id, :id, 0")
-                      .arg(table_info.node_path));
+                      .arg(tree_info.node_path));
     query.bindValue(":id", id);
     query.bindValue(":parent", id_parent);
 
@@ -424,7 +424,7 @@ bool TreeModel::DeleteRecord(int id, int id_parent)
 {
     QSqlQuery query = QSqlQuery(db);
 
-    query.prepare(QString("DELETE FROM %1 WHERE id = :id").arg(table_info.node));
+    query.prepare(QString("DELETE FROM %1 WHERE id = :id").arg(tree_info.node));
     query.bindValue(":id", id);
     if (!query.exec()) {
         qWarning() << "Failed to remove node 1st step" << query.lastError().text();
@@ -435,7 +435,7 @@ bool TreeModel::DeleteRecord(int id, int id_parent)
         "UPDATE %1 SET distance = distance -1 WHERE "
         "(descendant IN (SELECT descendant FROM %1 WHERE ancestor = :id AND ancestor != descendant) "
         "AND ancestor IN (SELECT ancestor FROM %1 WHERE descendant = :id AND ancestor != descendant))")
-                      .arg(table_info.node_path));
+                      .arg(tree_info.node_path));
     query.bindValue(":id", id);
     if (!query.exec()) {
         qWarning() << "Failed to remove node_path 2nd step"
@@ -446,7 +446,7 @@ bool TreeModel::DeleteRecord(int id, int id_parent)
     query.prepare(QString(
         "DELETE FROM %1 "
         "WHERE descendant = :id OR ancestor = :id")
-                      .arg(table_info.node_path));
+                      .arg(tree_info.node_path));
     query.bindValue(":id", id);
     if (!query.exec()) {
         qWarning() << "Failed to remove node_path 3rd step"
@@ -464,7 +464,7 @@ bool TreeModel::DragRecord(int id, int new_parent)
     query.prepare(QString("DELETE FROM %1 WHERE "
                           "(descendant IN (SELECT descendant FROM %1 WHERE ancestor = :id) AND "
                           "ancestor IN (SELECT ancestor FROM %1 WHERE descendant = :id AND ancestor != descendant))")
-                      .arg(table_info.node_path));
+                      .arg(tree_info.node_path));
     query.bindValue(":id", id);
     if (!query.exec()) {
         qWarning() << "Failed to drag node_path 1st step"
@@ -477,7 +477,7 @@ bool TreeModel::DragRecord(int id, int new_parent)
                           "FROM %1 p "
                           "CROSS JOIN %1 s "
                           "WHERE p.descendant = :new_parent AND s.ancestor = :id")
-                      .arg(table_info.node_path));
+                      .arg(tree_info.node_path));
     query.bindValue(":id", id);
     query.bindValue(":new_parent", new_parent);
 

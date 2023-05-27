@@ -45,18 +45,16 @@ QVariant TableModel::data(const QModelIndex& index, int role) const
     if (!index.isValid())
         return QVariant();
 
-    auto transaction = static_cast<Transaction>(index.internalPointer());
-
     if (role == Qt::DisplayRole) {
         switch (index.column()) {
         case 0:
-            return node->name;
+
             break;
         case 1:
-            return node->id;
+
             break;
         case 2:
-            return node->description;
+
             break;
         default:
             break;
@@ -71,19 +69,40 @@ bool TableModel::setData(const QModelIndex& index, const QVariant& value, int ro
     if (!index.isValid() || role != Qt::EditRole)
         return false;
 
-    auto* node = static_cast<Node*>(index.internalPointer());
-
     switch (index.column()) {
     case 0:
         break;
     case 1:
         break;
     case 2:
-        node->description = value.toString();
-        emit dataChanged(index, index, QVector<int>() << role);
-        UpdateRecord(node->id, "description", value.toString());
+
         return true;
     }
 
     return false;
+}
+
+QVariant TableModel::headerData(int section, Qt::Orientation orientation, int role) const
+{
+
+}
+
+void TableModel::sort(int column, Qt::SortOrder order)
+{
+
+}
+
+bool TableModel::insertRows(int row, int count, const QModelIndex &parent)
+{
+
+}
+
+bool TableModel::removeRows(int row, int count, const QModelIndex &parent)
+{
+
+}
+
+Qt::ItemFlags TableModel::flags(const QModelIndex &index) const
+{
+
 }

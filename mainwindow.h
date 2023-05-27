@@ -32,6 +32,6 @@ private slots:
 private:
     Ui::MainWindow* ui;
     TreeModel* tree_model;
-    TableInfo* table_info;
+    TreeInfo* table_info;
 };
 #endif // MAINWINDOW_H
