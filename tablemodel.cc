@@ -41,11 +41,11 @@ QVariant TableModel::data(const QModelIndex& index, int role) const
     if (role == Qt::DisplayRole) {
         switch (index.column()) {
         case 0:
-            return transactions.at(row).id;
+            return transactions.at(row)->id;
         case 1:
-            return transactions.at(row).note;
+            return transactions.at(row)->note;
         case 2:
-            return transactions.at(row).description;
+            return transactions.at(row)->description;
         default:
             break;
         }
@@ -63,13 +63,13 @@ bool TableModel::setData(const QModelIndex& index, const QVariant& value, int ro
 
     switch (index.column()) {
     case 0:
-        transactions[row].id = value.toInt();
+        transactions[row]->id = value.toInt();
         return true;
     case 1:
-        transactions[row].note = value.toString();
+        transactions[row]->note = value.toString();
         return true;
     case 2:
-        transactions[row].description = value.toString();
+        transactions[row]->description = value.toString();
         return true;
     }
 
@@ -92,17 +92,17 @@ void TableModel::sort(int column, Qt::SortOrder order)
 
     emit layoutAboutToBeChanged();
 
-    auto Compare = [column, order](const Transaction& lhs, const Transaction& rhs) -> bool {
+    auto Compare = [column, order](const Transaction* lhs, const Transaction* rhs) -> bool {
         bool result;
         switch (column) {
         case 0:
-            result = lhs.id < rhs.id;
+            result = lhs->id < rhs->id;
             break;
         case 1:
-            result = lhs.note < rhs.note;
+            result = lhs->note < rhs->note;
             break;
         case 2:
-            result = lhs.description < rhs.description;
+            result = lhs->description < rhs->description;
             break;
         default:
             result = false;
@@ -160,7 +160,8 @@ void TableModel::ConstructTable(const QSqlDatabase& db)
         note = query.value(1).toString();
         description = query.value(2).toString();
 
-        Transaction transaction(id, note, description);
+        //        Transaction transaction(id, note, description);
+        auto* transaction = new Transaction(id, note, description);
         transactions.emplace_back(transaction);
     }
 }

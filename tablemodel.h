@@ -57,7 +57,7 @@ private:
     void ConstructTable(const QSqlDatabase& db);
 
 private:
-    QList<Transaction> transactions;
+    QList<Transaction*> transactions;
     QSqlDatabase db;
     TableInfo table_info;
 
