@@ -8,9 +8,9 @@ MainWindow::MainWindow(QWidget* parent)
 {
     ui->setupUi(this);
 
-    table_info = new TreeInfo("test.db", "node", "node_path");
+    tree_info = new TreeInfo("test.db", "node", "node_path");
 
-    tree_model = new TreeModel(*table_info, this);
+    tree_model = new TreeModel(*tree_info, this);
 
     ui->treeView->setModel(tree_model);
     ui->treeView->setSelectionMode(QAbstractItemView::SingleSelection);
@@ -29,7 +29,7 @@ MainWindow::MainWindow(QWidget* parent)
 MainWindow::~MainWindow()
 {
     delete ui;
-    delete table_info;
+    delete tree_info;
     delete tree_model;
 }
 
