@@ -54,6 +54,9 @@ public:
     Qt::ItemFlags flags(const QModelIndex& index) const override;
 
 private:
+    void ConstructTable(const QSqlDatabase& db);
+
+private:
     QList<Transaction> transactions;
     QSqlDatabase db;
     TableInfo table_info;

@@ -179,13 +179,10 @@ QVariant TreeModel::data(const QModelIndex& index, int role) const
         switch (index.column()) {
         case 0:
             return node->name;
-            break;
         case 1:
             return node->id;
-            break;
         case 2:
             return node->description;
-            break;
         default:
             break;
         }
