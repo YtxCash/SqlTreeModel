@@ -254,8 +254,7 @@ void TreeModel::sort(int column, Qt::SortOrder order)
 {
     emit layoutAboutToBeChanged();
 
-    std::function<bool(Node*, Node*)> Compare =
-        [column, order](Node* lhs, Node* rhs) -> bool {
+    auto Compare = [column, order](const Node* lhs, const Node* rhs) -> bool {
         bool result;
         switch (column) {
         case 0:

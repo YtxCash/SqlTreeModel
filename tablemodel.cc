@@ -18,8 +18,8 @@ TableModel::TableModel(const TableInfo& table_info, QObject* parent)
         return;
     }
 
-    headers << "Account"
-            << "Id"
+    headers << "ID"
+            << "Note"
             << "Description";
 }
 
@@ -84,25 +84,49 @@ bool TableModel::setData(const QModelIndex& index, const QVariant& value, int ro
 
 QVariant TableModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
+    if (orientation == Qt::Horizontal && role == Qt::DisplayRole)
+        return headers.at(section);
 
+    return QVariant();
 }
 
 void TableModel::sort(int column, Qt::SortOrder order)
 {
+    emit layoutAboutToBeChanged();
 
+    auto Compare = [column, order](const Transaction& lhs, const Transaction& rhs) -> bool {
+        bool result;
+        switch (column) {
+        case 0:
+            result = lhs.id < rhs.id;
+            break;
+        case 1:
+            result = lhs.note < rhs.note;
+            break;
+        case 2:
+            result = lhs.description < rhs.description;
+            break;
+        default:
+            result = false;
+            break;
+        }
+
+        return order == Qt::AscendingOrder ? result : !result;
+    };
+
+    std::sort(transactions.begin(), transactions.end(), Compare);
+
+    emit layoutChanged();
 }
 
-bool TableModel::insertRows(int row, int count, const QModelIndex &parent)
+bool TableModel::insertRows(int row, int count, const QModelIndex& parent)
 {
-
 }
 
-bool TableModel::removeRows(int row, int count, const QModelIndex &parent)
+bool TableModel::removeRows(int row, int count, const QModelIndex& parent)
 {
-
 }
 
-Qt::ItemFlags TableModel::flags(const QModelIndex &index) const
+Qt::ItemFlags TableModel::flags(const QModelIndex& index) const
 {
-
 }
