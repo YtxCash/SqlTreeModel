@@ -266,7 +266,6 @@ void TreeModel::sort(int column, Qt::SortOrder order)
         case 2:
             result = lhs->description < rhs->description;
             break;
-
         default:
             result = false;
             break;
@@ -275,16 +274,16 @@ void TreeModel::sort(int column, Qt::SortOrder order)
         return order == Qt::AscendingOrder ? result : !result;
     };
 
-    std::function<void(Node*)> SortChildren =
-        [&Compare, &SortChildren](Node* node) {
+    std::function<void(Node*)> Sort =
+        [&Compare, &Sort](Node* node) {
             std::sort(node->children.begin(), node->children.end(), Compare);
 
             for (Node* child : node->children) {
-                SortChildren(child);
+                Sort(child);
             }
         };
 
-    SortChildren(root);
+    Sort(root);
 
     emit layoutChanged();
 }

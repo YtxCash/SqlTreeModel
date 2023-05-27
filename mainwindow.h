@@ -1,5 +1,6 @@
 ﻿#ifndef MAINWINDOW_H
 #define MAINWINDOW_H
+#include "tablemodel.h"
 #include "treemodel.h"
 #include "ui_mainwindow.h"
 #include <QMainWindow>
@@ -31,7 +32,13 @@ private slots:
 
 private:
     Ui::MainWindow* ui;
+
     TreeModel* tree_model;
     TreeInfo* tree_info;
+
+    TableInfo* table_info;
+    TableModel* table_model;
+
+    //    QSqlDatabase db;
 };
 #endif // MAINWINDOW_H
