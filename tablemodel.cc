@@ -47,7 +47,7 @@ QVariant TableModel::data(const QModelIndex& index, int role) const
         case 2:
             return transactions.at(row)->description;
         default:
-            break;
+            return QVariant();
         }
     }
 
@@ -86,10 +86,6 @@ QVariant TableModel::headerData(int section, Qt::Orientation orientation, int ro
 
 void TableModel::sort(int column, Qt::SortOrder order)
 {
-    if (transactions.size() == 0) {
-        return;
-    }
-
     emit layoutAboutToBeChanged();
 
     auto Compare = [column, order](const Transaction* lhs, const Transaction* rhs) -> bool {

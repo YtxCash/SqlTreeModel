@@ -184,7 +184,7 @@ QVariant TreeModel::data(const QModelIndex& index, int role) const
         case 2:
             return node->description;
         default:
-            break;
+            return QVariant();
         }
     }
 
