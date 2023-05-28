@@ -1,9 +1,8 @@
 #include "comboboxdelegate.h"
 #include <QComboBox>
 
-ComboBoxDelegate::ComboBoxDelegate(QStringList leaf_paths, QObject* parent)
+ComboBoxDelegate::ComboBoxDelegate(QObject* parent)
     : QStyledItemDelegate { parent }
-    , leaf_paths { leaf_paths }
 {
 }
 
@@ -38,4 +37,9 @@ void ComboBoxDelegate::SetItem(QStringList list, bool editable)
 {
     leaf_paths = list;
     item_editable = editable;
+}
+
+void ComboBoxDelegate::ReceiveStringList(QStringList list)
+{
+    leaf_paths = list;
 }

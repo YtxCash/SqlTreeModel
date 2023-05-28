@@ -40,7 +40,9 @@ MainWindow::MainWindow(QWidget* parent)
     financial_table_info = new TableInfo("financial_transaction");
     financial_table_model = new TableModel(db, *financial_table_info, this);
 
-    auto delegate = new ComboBoxDelegate(financial_tree_model->leaf_paths, this);
+    auto delegate = new ComboBoxDelegate(this);
+    connect(financial_tree_model, &TreeModel::SignalStringList, delegate, &ComboBoxDelegate::ReceiveStringList);
+
     ui->tableView->setItemDelegateForColumn(2, delegate);
 
     ui->tableView->setModel(financial_table_model);

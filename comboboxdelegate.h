@@ -6,13 +6,16 @@
 class ComboBoxDelegate : public QStyledItemDelegate {
     Q_OBJECT
 public:
-    explicit ComboBoxDelegate(QStringList leaf_paths, QObject* parent = nullptr);
+    explicit ComboBoxDelegate(QObject* parent = nullptr);
 
     QWidget* createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
     void setEditorData(QWidget* editor, const QModelIndex& index) const override;
     void updateEditorGeometry(QWidget* editor, const QStyleOptionViewItem& option, const QModelIndex& index) const override;
 
     void SetItem(QStringList list, bool editable);
+
+public slots:
+    void ReceiveStringList(QStringList list);
 
 private:
     QStringList leaf_paths;

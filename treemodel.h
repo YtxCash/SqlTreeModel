@@ -32,13 +32,11 @@ struct TreeInfo {
 };
 
 class TreeModel : public QAbstractItemModel {
+    Q_OBJECT
 
 public:
     explicit TreeModel(const QSqlDatabase& db, const TreeInfo& tree_info, QObject* parent = nullptr);
     ~TreeModel();
-
-public:
-    QStringList leaf_paths;
 
 public:
     QModelIndex index(int row, int column,
@@ -72,6 +70,9 @@ public:
     bool dropMimeData(const QMimeData* data, Qt::DropAction action, int row,
         int column, const QModelIndex& parent) override;
 
+signals:
+    void SignalStringList(const QStringList& list);
+
 private:
     bool InsertRecord(int id_parent, QString name);
     bool UpdateRecord(int id, QString column, QString string);
@@ -85,6 +86,8 @@ private:
     Node* GetNode(Node* parent, int id);
     bool IsDescendant(Node* descendant, Node* ancestor);
 
+    void SendStringList(const QStringList& list);
+
 private:
     Node* root;
 
@@ -92,8 +95,10 @@ private:
     TreeInfo tree_info;
 
     int id;
-    QStringList headers;
     QChar separator { '/' };
+
+    QStringList headers;
+    QStringList leaf_paths;
 };
 
 #endif // TREEMODEL_H

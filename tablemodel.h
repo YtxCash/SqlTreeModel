@@ -27,6 +27,7 @@ struct TableInfo {
 };
 
 class TableModel : public QAbstractTableModel {
+    Q_OBJECT
 
 public:
     explicit TableModel(const QSqlDatabase& db, const TableInfo& table_info, QObject* parent = nullptr);

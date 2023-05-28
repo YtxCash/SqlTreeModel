@@ -126,6 +126,8 @@ void TreeModel::ConstructLeafPaths(const QSqlDatabase& db, QChar c)
 
         leaf_paths.emplace_back(path);
     }
+
+    SendStringList(leaf_paths);
 }
 
 QModelIndex TreeModel::index(int row, int column, const QModelIndex& parent) const
@@ -316,6 +318,11 @@ bool TreeModel::IsDescendant(Node* descendant, Node* ancestor)
     }
 
     return false;
+}
+
+void TreeModel::SendStringList(const QStringList& list)
+{
+    emit SignalStringList(list);
 }
 
 bool TreeModel::insertRows(int row, int count, const QModelIndex& parent)
