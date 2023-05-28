@@ -38,7 +38,7 @@ public:
     ~TreeModel();
 
 public:
-    QHash<int, QString> leaf_paths;
+    QStringList leaf_paths;
 
 public:
     QModelIndex index(int row, int column,

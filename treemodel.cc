@@ -124,7 +124,7 @@ void TreeModel::ConstructLeafPaths(const QSqlDatabase& db, QChar c)
             path = node->name + c + path;
         }
 
-        leaf_paths[id] = path;
+        leaf_paths.emplace_back(path);
     }
 }
 
