@@ -93,6 +93,7 @@ private:
 
     int id;
     QStringList headers;
+    QChar separator { '/' };
 };
 
 #endif // TREEMODEL_H

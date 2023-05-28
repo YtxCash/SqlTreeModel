@@ -93,7 +93,7 @@ void TreeModel::ConstructTree(const QSqlDatabase& db)
         }
     }
 
-    ConstructLeafPaths(db, '/');
+    ConstructLeafPaths(db, separator);
 }
 
 void TreeModel::ConstructLeafPaths(const QSqlDatabase& db, QChar c)
@@ -335,7 +335,7 @@ bool TreeModel::insertRows(int row, int count, const QModelIndex& parent)
 
     endInsertRows();
 
-    ConstructLeafPaths(db, '/');
+    ConstructLeafPaths(db, separator);
 
     return true;
 }
@@ -397,7 +397,8 @@ bool TreeModel::removeRows(int row, int count, const QModelIndex& parent)
     endRemoveRows();
 
     DeleteRecord(id, node_parent->id);
-    ConstructLeafPaths(db, '/');
+
+    ConstructLeafPaths(db, separator);
 
     return true;
 }
