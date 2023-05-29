@@ -16,6 +16,7 @@ TreeModel::TreeModel(const QSqlDatabase& db, const TreeInfo& tree_info, QObject*
             << "Description";
 
     ConstructTree(db);
+    ConstructLeafPaths(db, separator);
 }
 
 TreeModel::~TreeModel()
@@ -92,8 +93,6 @@ void TreeModel::ConstructTree(const QSqlDatabase& db)
             root->children.emplace_back(node);
         }
     }
-
-    ConstructLeafPaths(db, separator);
 }
 
 void TreeModel::ConstructLeafPaths(const QSqlDatabase& db, QChar c)
@@ -124,10 +123,8 @@ void TreeModel::ConstructLeafPaths(const QSqlDatabase& db, QChar c)
             path = node->name + c + path;
         }
 
-        leaf_paths.emplace_back(path);
+        leaf_paths[path] = id;
     }
-
-    SendStringList(leaf_paths);
 }
 
 QModelIndex TreeModel::index(int row, int column, const QModelIndex& parent) const
@@ -172,22 +169,20 @@ int TreeModel::rowCount(const QModelIndex& parent) const
 
 QVariant TreeModel::data(const QModelIndex& index, int role) const
 {
-    if (!index.isValid())
+    if (!index.isValid() || role != Qt::DisplayRole)
         return QVariant();
 
     auto* node = static_cast<Node*>(index.internalPointer());
 
-    if (role == Qt::DisplayRole) {
-        switch (index.column()) {
-        case 0:
-            return node->name;
-        case 1:
-            return node->id;
-        case 2:
-            return node->description;
-        default:
-            return QVariant();
-        }
+    switch (index.column()) {
+    case 0:
+        return node->name;
+    case 1:
+        return node->id;
+    case 2:
+        return node->description;
+    default:
+        return QVariant();
     }
 
     return QVariant();
@@ -320,9 +315,9 @@ bool TreeModel::IsDescendant(Node* descendant, Node* ancestor)
     return false;
 }
 
-void TreeModel::SendStringList(const QStringList& list)
+void TreeModel::UpdateLeafPaths()
 {
-    emit SignalStringList(list);
+    emit LeafPaths(leaf_paths);
 }
 
 bool TreeModel::insertRows(int row, int count, const QModelIndex& parent)
@@ -333,7 +328,7 @@ bool TreeModel::insertRows(int row, int count, const QModelIndex& parent)
     auto* node_parent = GetNode(parent);
 
     InsertRecord(node_parent->id, "New Node");
-    auto* new_node = new Node(id, "New Node", "");
+    auto* new_node = new Node(id_last_insert, "New Node", "");
 
     beginInsertRows(parent, row, row);
 
@@ -343,6 +338,7 @@ bool TreeModel::insertRows(int row, int count, const QModelIndex& parent)
     endInsertRows();
 
     ConstructLeafPaths(db, separator);
+    UpdateLeafPaths();
 
     return true;
 }
@@ -350,7 +346,7 @@ bool TreeModel::insertRows(int row, int count, const QModelIndex& parent)
 bool TreeModel::InsertRecord(int id_parent, QString name)
 {
 
-    QSqlQuery query = QSqlQuery(db);
+    auto query = QSqlQuery(db);
 
     query.prepare(QString("INSERT INTO %1 (name) VALUES (:name)").arg(tree_info.node));
     query.bindValue(":name", name);
@@ -360,7 +356,7 @@ bool TreeModel::InsertRecord(int id_parent, QString name)
         return false;
     }
 
-    id = query.lastInsertId().toInt();
+    id_last_insert = query.lastInsertId().toInt();
 
     query.prepare(QString(
         "INSERT INTO %1 (ancestor, descendant, distance) "
@@ -368,7 +364,7 @@ bool TreeModel::InsertRecord(int id_parent, QString name)
         "FROM %1 WHERE descendant = :parent "
         "UNION ALL SELECT :id, :id, 0")
                       .arg(tree_info.node_path));
-    query.bindValue(":id", id);
+    query.bindValue(":id", id_last_insert);
     query.bindValue(":parent", id_parent);
 
     if (!query.exec()) {
@@ -406,6 +402,7 @@ bool TreeModel::removeRows(int row, int count, const QModelIndex& parent)
     DeleteRecord(id, node_parent->id);
 
     ConstructLeafPaths(db, separator);
+    UpdateLeafPaths();
 
     return true;
 }
@@ -602,4 +599,9 @@ bool TreeModel::dropMimeData(const QMimeData* data, Qt::DropAction action, int r
     }
 
     return true;
+}
+
+QMap<QString, int> TreeModel::GetLeafPaths()
+{
+    return leaf_paths;
 }

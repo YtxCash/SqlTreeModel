@@ -70,8 +70,11 @@ public:
     bool dropMimeData(const QMimeData* data, Qt::DropAction action, int row,
         int column, const QModelIndex& parent) override;
 
+public:
+    QMap<QString, int> GetLeafPaths();
+
 signals:
-    void SignalStringList(const QStringList& list);
+    void LeafPaths(const QMap<QString, int>& paths);
 
 private:
     bool InsertRecord(int id_parent, QString name);
@@ -86,7 +89,7 @@ private:
     Node* GetNode(Node* parent, int id);
     bool IsDescendant(Node* descendant, Node* ancestor);
 
-    void SendStringList(const QStringList& list);
+    void UpdateLeafPaths();
 
 private:
     Node* root;
@@ -94,11 +97,11 @@ private:
     QSqlDatabase db;
     TreeInfo tree_info;
 
-    int id;
+    int id_last_insert;
     QChar separator { '/' };
-
     QStringList headers;
-    QStringList leaf_paths;
+
+    QMap<QString, int> leaf_paths;
 };
 
 #endif // TREEMODEL_H

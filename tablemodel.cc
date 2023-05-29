@@ -9,10 +9,14 @@ TableModel::TableModel(const QSqlDatabase& db, const TableInfo& table_info, QObj
 {
 
     headers << "ID"
+            << "Source"
             << "Note"
-            << "Description";
+            << "Description"
+            << "Target"
+            << "Debit"
+            << "Credit";
 
-    ConstructTable(db);
+    ConstructTable(db, table_info.id_selected);
 }
 
 TableModel::~TableModel()
@@ -115,10 +119,23 @@ void TableModel::sort(int column, Qt::SortOrder order)
 
 bool TableModel::insertRows(int row, int count, const QModelIndex& parent)
 {
+    if (row < 0 || count != 1 || !parent.isValid())
+        return false;
+
+    //    auto transaction = new Transaction(0, "", "");
+    //    transactions.insert(row, transaction);
+
+    return true;
 }
 
 bool TableModel::removeRows(int row, int count, const QModelIndex& parent)
 {
+    if (row < 0 || count != 1 || !parent.isValid())
+        return false;
+
+    transactions.remove(row, 1);
+
+    return true;
 }
 
 Qt::ItemFlags TableModel::flags(const QModelIndex& index) const
@@ -136,11 +153,12 @@ Qt::ItemFlags TableModel::flags(const QModelIndex& index) const
     }
 }
 
-void TableModel::ConstructTable(const QSqlDatabase& db)
+void TableModel::ConstructTable(const QSqlDatabase& db, int id_selected)
 {
     auto query = QSqlQuery(db);
 
-    query.prepare(QString("SELECT id, note, description FROM %1").arg(table_info.transaction));
+    query.prepare(QString("SELECT :id_selected, note, description FROM %1").arg(table_info.transaction));
+    query.bindValue(":id_selected", id_selected);
 
     if (!query.exec()) {
         qWarning() << QString("Error query data from %1").arg(table_info.transaction)
@@ -156,8 +174,29 @@ void TableModel::ConstructTable(const QSqlDatabase& db)
         note = query.value(1).toString();
         description = query.value(2).toString();
 
-        //        Transaction transaction(id, note, description);
-        auto* transaction = new Transaction(id, note, description);
-        transactions.emplace_back(transaction);
+        //        auto* transaction = new Transaction(id, note, description);
+        //        transactions.emplace_back(transaction);
     }
+}
+
+bool TableModel::InsertRecord()
+{
+    auto query = QSqlQuery(db);
+
+    query.prepare(QString("INSERT INTO %1 DEFAULT VALUES ").arg(table_info.transaction));
+
+    if (!query.exec()) {
+        qWarning() << "Failed to add node" << query.lastError().text();
+        return false;
+    }
+
+    id_last_insert = query.lastInsertId().toInt();
+}
+
+bool TableModel::UpdateRecord(int id, QString column, QString string)
+{
+}
+
+bool TableModel::DeleteRecord(int id)
+{
 }

@@ -15,10 +15,14 @@
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout">
-    <item row="0" column="0">
-     <widget class="QTreeView" name="treeView"/>
+    <item row="1" column="0">
+     <widget class="QPushButton" name="btnInsert">
+      <property name="text">
+       <string>Insert Row</string>
+      </property>
+     </widget>
     </item>
-    <item row="4" column="0">
+    <item row="3" column="0">
      <widget class="QPushButton" name="btnDelete">
       <property name="text">
        <string>Delete Row</string>
@@ -32,15 +36,22 @@
       </property>
      </widget>
     </item>
-    <item row="1" column="0">
-     <widget class="QPushButton" name="btnInsert">
-      <property name="text">
-       <string>Insert Row</string>
+    <item row="0" column="0" colspan="2">
+     <widget class="QTabWidget" name="tabWidget">
+      <property name="tabPosition">
+       <enum>QTabWidget::North</enum>
       </property>
+      <widget class="QWidget" name="financial">
+       <attribute name="title">
+        <string>Financial</string>
+       </attribute>
+       <layout class="QGridLayout" name="gridLayout_2">
+        <item row="0" column="0">
+         <widget class="QTreeView" name="treeView"/>
+        </item>
+       </layout>
+      </widget>
      </widget>
-    </item>
-    <item row="0" column="1">
-     <widget class="QTableView" name="tableView"/>
     </item>
    </layout>
   </widget>

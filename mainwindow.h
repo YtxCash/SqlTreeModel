@@ -30,14 +30,12 @@ private slots:
 
     void on_btnAppend_clicked();
 
+    void on_treeView_doubleClicked(const QModelIndex& index);
+
 private:
     Ui::MainWindow* ui;
 
     TreeModel* financial_tree_model;
-    TreeInfo* financial_tree_info;
-
-    TableInfo* financial_table_info;
-    TableModel* financial_table_model;
 
     QSqlDatabase db;
 };

@@ -6,22 +6,28 @@
 
 struct Transaction {
     int id { 0 };
+    int source { 0 };
     QString note { "" };
     QString description { "" };
+    int target { 0 };
+    double debit { 0.00 };
+    double credit { 0.00 };
 
-    Transaction(int id, QString note, QString description)
+    Transaction(int id, int source, int target)
         : id { id }
-        , note { note }
-        , description { description }
+        , source { source }
+        , target { target }
     {
     }
 };
 
 struct TableInfo {
     QString transaction { "" };
+    int id_selected { 0 };
 
-    TableInfo(QString transaction)
+    TableInfo(QString transaction, int id)
         : transaction { transaction }
+        , id_selected { id }
     {
     }
 };
@@ -55,13 +61,17 @@ public:
     Qt::ItemFlags flags(const QModelIndex& index) const override;
 
 private:
-    void ConstructTable(const QSqlDatabase& db);
+    void ConstructTable(const QSqlDatabase& db, int id);
+    bool InsertRecord();
+    bool UpdateRecord(int id, QString column, QString string);
+    bool DeleteRecord(int id);
 
 private:
     QList<Transaction*> transactions;
     QSqlDatabase db;
     TableInfo table_info;
 
+    int id_last_insert;
     QStringList headers;
 };
 

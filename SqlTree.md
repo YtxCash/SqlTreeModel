@@ -7,8 +7,10 @@
 CREATE TABLE financial
     (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+
         name TEXT NOT NULL,
-        description TEXT NULL
+
+        description TEXT DEFAULT NULL
         );
 
 -- The code creates a table financial_path. The table has 4 columns: id, ancestor, descendant, and distance. The table is used to store the path between two financials in a graph. The distance is the number of edges between two financials. The ancestor and descendant columns are foreign keys to the financial table. The ancestor column stores the id of the financial that is the ancestor of the descendant financial. The descendant column stores the id of the financial that is the descendant of the ancestor financial. The distance column stores the number of edges between the two financials.
@@ -30,12 +32,27 @@ CREATE TABLE financial_path
         UNIQUE (ancestor, descendant)
 
     );
-    
+
 CREATE TABLE financial_transaction
     (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        note TEXT NULL,
-        description TEXT NULL
+
+        source INTEGER NOT NULL,
+
+        note TEXT DEFAULT NULL,
+
+        description TEXT DEFAULT NULL,
+
+        target INTEGER NOT NULL,
+
+        debit MONEY DEFAULT NULL,
+
+        credit MONEY DEFAULT NULL,
+
+        FOREIGN KEY (source) REFERENCES financial(id),
+
+        FOREIGN KEY (target) REFERENCES financial(id)
+
     );
 
 -- This code creates an index on the name column of the financial table.
@@ -45,19 +62,19 @@ CREATE INDEX financial_name_index
 
 -- Insert some example data
 
-INSERT INTO financial (name) VALUES ("A");
-INSERT INTO financial (name) VALUES ("B");
-INSERT INTO financial (name) VALUES ("C");
-INSERT INTO financial (name) VALUES ("D");
-INSERT INTO financial (name) VALUES ("E");
-INSERT INTO financial (name) VALUES ("F");
-INSERT INTO financial (name) VALUES ("G");
-INSERT INTO financial (name) VALUES ("H");
-INSERT INTO financial (name) VALUES ("I");
-INSERT INTO financial (name) VALUES ("J");
-INSERT INTO financial (name) VALUES ("K");
-INSERT INTO financial (name) VALUES ("L");
-INSERT INTO financial (name) VALUES ("M");
+INSERT INTO financial (name) VALUES ('A');
+INSERT INTO financial (name) VALUES ('B');
+INSERT INTO financial (name) VALUES ('C');
+INSERT INTO financial (name) VALUES ('D');
+INSERT INTO financial (name) VALUES ('E');
+INSERT INTO financial (name) VALUES ('F');
+INSERT INTO financial (name) VALUES ('G');
+INSERT INTO financial (name) VALUES ('H');
+INSERT INTO financial (name) VALUES ('I');
+INSERT INTO financial (name) VALUES ('J');
+INSERT INTO financial (name) VALUES ('K');
+INSERT INTO financial (name) VALUES ('L');
+INSERT INTO financial (name) VALUES ('M');
 
 INSERT INTO financial_path (ancestor, descendant, distance) VALUES (1, 1, 0);
 INSERT INTO financial_path (ancestor, descendant, distance) VALUES (2, 2, 0);
@@ -85,18 +102,4 @@ INSERT INTO financial_path (ancestor, descendant, distance) VALUES (1, 10, 1);
 INSERT INTO financial_path (ancestor, descendant, distance) VALUES (1, 11, 1);
 INSERT INTO financial_path (ancestor, descendant, distance) VALUES (1, 12, 1);
 INSERT INTO financial_path (ancestor, descendant, distance) VALUES (1, 13, 1);
-
-INSERT INTO financial_transaction (note) VALUES ("Aa");
-INSERT INTO financial_transaction (note) VALUES ("Bb");
-INSERT INTO financial_transaction (note) VALUES ("Cv");
-INSERT INTO financial_transaction (note) VALUES ("Dd");
-INSERT INTO financial_transaction (note) VALUES ("Ee");
-INSERT INTO financial_transaction (note) VALUES ("Ff");
-INSERT INTO financial_transaction (note) VALUES ("Gg");
-INSERT INTO financial_transaction (note) VALUES ("Hh");
-INSERT INTO financial_transaction (note) VALUES ("Ii");
-INSERT INTO financial_transaction (note) VALUES ("Jj");
-INSERT INTO financial_transaction (note) VALUES ("Kk");
-INSERT INTO financial_transaction (note) VALUES ("Ll");
-INSERT INTO financial_transaction (note) VALUES ("Mm");
 ```

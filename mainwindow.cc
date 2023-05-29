@@ -2,7 +2,9 @@
 #include "QtSql/qsqlerror.h"
 #include "comboboxdelegate.h"
 #include "ui_mainwindow.h"
+#include <QCompleter>
 #include <QInputDialog>
+#include <QTableView>
 
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
@@ -23,8 +25,8 @@ MainWindow::MainWindow(QWidget* parent)
 
     ui->setupUi(this);
 
-    financial_tree_info = new TreeInfo("financial", "financial_path");
-    financial_tree_model = new TreeModel(db, *financial_tree_info, this);
+    auto financial_tree_info = TreeInfo("financial", "financial_path");
+    financial_tree_model = new TreeModel(db, financial_tree_info, ui->treeView);
 
     ui->treeView->setModel(financial_tree_model);
     ui->treeView->setSelectionMode(QAbstractItemView::SingleSelection);
@@ -37,17 +39,10 @@ MainWindow::MainWindow(QWidget* parent)
     ui->treeView->setExpandsOnDoubleClick(true);
     ui->treeView->header()->setStretchLastSection(true);
 
-    financial_table_info = new TableInfo("financial_transaction");
-    financial_table_model = new TableModel(db, *financial_table_info, this);
-
-    auto delegate = new ComboBoxDelegate(this);
-    connect(financial_tree_model, &TreeModel::SignalStringList, delegate, &ComboBoxDelegate::ReceiveStringList);
-
-    ui->tableView->setItemDelegateForColumn(2, delegate);
-
-    ui->tableView->setModel(financial_table_model);
-    ui->tableView->setSortingEnabled(true);
-    ui->tableView->horizontalHeader()->setStretchLastSection(true);
+    ui->tabWidget->setMovable(true);
+    ui->tabWidget->setTabsClosable(true);
+    ui->tabWidget->setElideMode(Qt::ElideNone);
+    ui->gridLayout_2->setContentsMargins(0, 0, 0, 0);
 
     connect(ui->treeView->selectionModel(), &QItemSelectionModel::currentChanged, this, &MainWindow::CurrentChanged);
 }
@@ -55,11 +50,6 @@ MainWindow::MainWindow(QWidget* parent)
 MainWindow::~MainWindow()
 {
     delete ui;
-    delete financial_tree_info;
-    delete financial_tree_model;
-    delete financial_table_info;
-    delete financial_table_model;
-
     db.close();
 }
 
@@ -108,5 +98,27 @@ void MainWindow::on_btnAppend_clicked()
 
         auto index_child = financial_tree_model->index(0, 0, index);
         ui->treeView->setCurrentIndex(index_child);
+    }
+}
+
+void MainWindow::on_treeView_doubleClicked(const QModelIndex& index)
+{
+    auto* node = static_cast<Node*>(index.internalPointer());
+
+    if (node->children.isEmpty()) {
+        auto* table_view = new QTableView();
+        auto table_info = TableInfo("financial_transaction", node->id);
+        auto* table_model = new TableModel(db, table_info, table_view);
+        auto* table_delegate = new ComboBoxDelegate(financial_tree_model->GetLeafPaths(), table_model);
+        connect(financial_tree_model, &TreeModel::LeafPaths, table_delegate, &ComboBoxDelegate::ReceiveLeafPaths);
+
+        table_view->setItemDelegateForColumn(2, table_delegate);
+        table_view->setModel(table_model);
+        table_view->setSortingEnabled(true);
+        table_view->horizontalHeader()->setStretchLastSection(true);
+        table_view->setSelectionMode(QAbstractItemView::SingleSelection);
+        table_view->setSelectionBehavior(QAbstractItemView::SelectRows);
+
+        ui->tabWidget->addTab(table_view, node->name);
     }
 }
